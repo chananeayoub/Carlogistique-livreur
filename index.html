@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CarLogistique">
+<meta name="theme-color" content="#0a0d14">
+<title>Car Logistique — Livreur</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg:       #0a0d14;
+    --bg2:      #0f1219;
+    --card:     #141720;
+    --card2:    #1a1e2a;
+    --border:   rgba(255,255,255,0.07);
+    --border2:  rgba(255,255,255,0.12);
+    --accent:   #f97316;
+    --accent2:  #ea6a00;
+    --glow:     rgba(249,115,22,0.3);
+    --blue:     #3b82f6;
+    --green:    #22c55e;
+    --red:      #ef4444;
+    --yellow:   #f59e0b;
+    --purple:   #a855f7;
+    --text:     #f0f4ff;
+    --text2:    #8892a4;
+    --text3:    #4a5568;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bot: env(safe-area-inset-bottom, 0px);
+    --nav-h:    70px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  html, body {
+    height: 100%;
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  /* ── APP SHELL ── */
+  #app { height: 100vh; display: flex; flex-direction: column; position: relative; }
+
+  /* ── SCREENS ── */
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    transform: translateY(12px);
+    overflow: hidden;
+  }
+  .screen.active {
+    opacity: 1; pointer-events: all;
+    transform: translateY(0);
+  }
+
+  /* ── SCROLLABLE CONTENT ── */
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(var(--nav-h) + var(--safe-bot) + 20px);
+    padding-top: calc(var(--safe-top) + 60px);
+  }
+  .scroll-area.no-nav { padding-bottom: 20px; }
+  .pad { padding: 0 18px; }
+
+  /* ── LOGIN ── */
+  #loginScreen {
+    background: var(--bg);
+    justify-content: center;
+    align-items: center;
+    padding: 32px 24px;
+    padding-top: calc(var(--safe-top) + 32px);
+    padding-bottom: calc(var(--safe-bot) + 32px);
+    gap: 0;
+  }
+  .login-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+  }
+  .login-blob-1 { width:250px;height:250px;background:rgba(249,115,22,0.12);top:-50px;right:-80px; }
+  .login-blob-2 { width:200px;height:200px;background:rgba(59,130,246,0.08);bottom:80px;left:-60px; }
+
+  .login-logo {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 36px;
+  }
+  .login-logo-icon {
+    width: 52px; height: 52px;
+    background: var(--accent);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 8px 24px var(--glow);
+  }
+  .login-logo-text { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .login-logo-text span { color: var(--accent); }
+  .login-tagline { font-size: 13px; color: var(--text2); margin-bottom: 40px; }
+  .login-form { width: 100%; max-width: 360px; }
+
+  .field-group { margin-bottom: 16px; }
+  .field-label { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: block; }
+  .field-input {
+    width: 100%;
+    background: var(--card);
+    border: 1.5px solid var(--border2);
+    border-radius: 14px;
+    padding: 15px 16px;
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+  }
+  .field-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+  .field-input::placeholder { color: var(--text3); }
+
+  .btn-main {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    padding: 17px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 8px 24px var(--glow);
+    position: relative;
+    overflow: hidden;
+    -webkit-appearance: none;
+  }
+  .btn-main:active { transform: scale(0.97); box-shadow: 0 4px 12px var(--glow); }
+  .btn-main:disabled { opacity: 0.5; pointer-events: none; }
+  .btn-main.loading::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.2);
+  }
+  .login-error { color: var(--red); font-size: 13px; margin-top: 12px; text-align: center; display: none; }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 50;
+    padding: calc(var(--safe-top) + 14px) 18px 14px;
+    background: rgba(10,13,20,0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .topbar-title { font-size: 18px; font-weight: 700; flex: 1; letter-spacing: -0.3px; }
+  .topbar-sub { font-size: 11px; color: var(--text2); display: block; font-weight: 400; }
+  .topbar-btn {
+    width: 38px; height: 38px;
+    background: var(--card2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 15px; color: var(--text2);
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .topbar-btn:active { background: var(--card); }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: calc(var(--nav-h) + var(--safe-bot));
+    padding-bottom: var(--safe-bot);
+    background: rgba(14,17,25,0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-around;
+    z-index: 100;
+  }
+  .nav-btn {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    padding: 8px 0 0;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .nav-btn-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s;
+    background: transparent;
+  }
+  .nav-btn.active .nav-btn-icon { background: rgba(249,115,22,0.15); }
+  .nav-btn-label { font-size: 10px; font-weight: 600; color: var(--text3); transition: color 0.15s; }
+  .nav-btn.active .nav-btn-label { color: var(--accent); }
+  .nav-btn.active .nav-btn-icon { color: var(--accent); }
+  .nav-btn-icon i { color: var(--text3); transition: color 0.15s; }
+  .nav-btn.active .nav-btn-icon i { color: var(--accent); }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  .card:active { border-color: var(--border2); }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 14px; }
+
+  /* ── STATUS BADGE ── */
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill-green  { background: rgba(34,197,94,0.15);  color: var(--green); }
+  .pill-orange { background: rgba(249,115,22,0.15); color: var(--accent); }
+  .pill-gray   { background: rgba(74,85,104,0.3);   color: var(--text2); }
+  .pill-red    { background: rgba(239,68,68,0.15);  color: var(--red); }
+
+  /* ── BIG ACTION BUTTON ── */
+  .action-card {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border-radius: 22px;
+    padding: 24px 22px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 12px 32px var(--glow);
+    display: flex; align-items: center; gap: 16px;
+    position: relative; overflow: hidden;
+    border: none;
+    width: 100%;
+    text-align: left;
+  }
+  .action-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+  }
+  .action-card:active { transform: scale(0.97); }
+  .action-card-icon { font-size: 32px; flex-shrink: 0; position: relative; }
+  .action-card-text {}
+  .action-card-title { font-size: 18px; font-weight: 800; color: #fff; }
+  .action-card-sub { font-size: 13px; color: rgba(255,255,255,0.75); margin-top: 3px; }
+
+  /* ── STAT ROW ── */
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 14px;
+  }
+  .stat-box-label { font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .stat-box-val { font-size: 28px; font-weight: 800; line-height: 1; }
+  .stat-box-unit { font-size: 13px; font-weight: 500; color: var(--text2); margin-top: 3px; }
+
+  /* ── INPUT FIELD ── */
+  .input-row { margin-bottom: 14px; }
+  .input-label { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px; display: block; }
+  .input-box {
+    width: 100%;
+    background: var(--card2);
+    border: 1.5px solid var(--border2);
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+  }
+  .input-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+  .input-box::placeholder { color: var(--text3); font-weight: 400; }
+  .input-box.big { font-size: 28px; font-weight: 800; text-align: center; padding: 18px; letter-spacing: 1px; }
+
+  /* ── BUTTON VARIANTS ── */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; border: none;
+    transition: all 0.2s;
+    width: 100%;
+    -webkit-appearance: none;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-accent { background: var(--accent); color: #fff; box-shadow: 0 6px 20px var(--glow); }
+  .btn-ghost  { background: var(--card2); color: var(--text2); border: 1.5px solid var(--border2); }
+  .btn-ghost:active { background: var(--card); }
+  .btn-green  { background: var(--green); color: #fff; box-shadow: 0 6px 20px rgba(34,197,94,0.3); }
+  .btn-red    { background: rgba(239,68,68,0.15); color: var(--red); border: 1.5px solid rgba(239,68,68,0.3); }
+  .btn-row    { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .btn-sm     { padding: 10px 16px; font-size: 13px; border-radius: 10px; }
+  .btn:disabled { opacity: 0.4; pointer-events: none; }
+
+  /* ── TYPE SELECTOR ── */
+  .type-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
+  .type-btn {
+    background: var(--card2);
+    border: 1.5px solid var(--border2);
+    border-radius: 14px;
+    padding: 14px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .type-btn.selected { border-color: var(--accent); background: rgba(249,115,22,0.1); }
+  .type-btn-icon { font-size: 24px; }
+  .type-btn-label { font-size: 12px; font-weight: 600; color: var(--text2); }
+  .type-btn.selected .type-btn-label { color: var(--accent); }
+
+  /* ── PHOTO CAPTURE ── */
+  .photo-zone {
+    background: var(--card2);
+    border: 2px dashed var(--border2);
+    border-radius: 16px;
+    padding: 28px 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    cursor: pointer; transition: all 0.2s;
+    margin-bottom: 14px;
+    position: relative; overflow: hidden;
+    min-height: 130px;
+    justify-content: center;
+  }
+  .photo-zone:active { border-color: var(--accent); background: rgba(249,115,22,0.05); }
+  .photo-zone.has-photo { border-style: solid; border-color: var(--green); }
+  .photo-zone img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:14px; }
+  .photo-zone-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    border-radius: 14px;
+  }
+  .photo-zone-icon { font-size: 32px; }
+  .photo-zone-text { font-size: 14px; font-weight: 600; color: var(--text2); }
+  .photo-zone-hint { font-size: 11px; color: var(--text3); }
+  .photo-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: var(--green);
+    color: #fff;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 11px; font-weight: 700;
+    z-index: 2;
+  }
+
+  /* ── COUNTER CONTROL ── */
+  .counter-row {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--card2);
+    border: 1.5px solid var(--border2);
+    border-radius: 16px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+  }
+  .counter-label { flex: 1; font-size: 15px; font-weight: 600; }
+  .counter-sub { font-size: 11px; color: var(--text2); font-weight: 400; }
+  .counter-btns { display: flex; align-items: center; gap: 12px; }
+  .counter-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border2);
+    background: var(--card);
+    color: var(--text);
+    font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .counter-btn:active { background: var(--accent); border-color: var(--accent); color: #fff; transform: scale(0.93); }
+  .counter-val { font-size: 22px; font-weight: 800; min-width: 36px; text-align: center; }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--border); margin: 18px 0; }
+  .section-title {
+    font-size: 12px; font-weight: 700; color: var(--text3);
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 14px; margin-top: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  /* ── EXPENSE ITEM ── */
+  .expense-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 10px;
+  }
+  .expense-icon { width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
+  .expense-info { flex: 1; min-width: 0; }
+  .expense-type { font-size: 14px; font-weight: 700; }
+  .expense-time { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .expense-amount { font-size: 18px; font-weight: 800; color: var(--yellow); }
+
+  /* ── SUMMARY ROWS ── */
+  .summary-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-key { font-size: 13px; color: var(--text2); }
+  .summary-val { font-size: 14px; font-weight: 700; }
+
+  /* ── CHECKLIST ── */
+  .check-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-box {
+    width: 24px; height: 24px;
+    border-radius: 7px;
+    border: 2px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.15s;
+  }
+  .check-box.done { background: var(--green); border-color: var(--green); }
+  .check-label { font-size: 14px; }
+  .check-label.done { color: var(--text2); text-decoration: line-through; }
+
+  /* ── TIMELINE ── */
+  .timeline { padding-left: 18px; border-left: 2px solid var(--border); }
+  .tl-item { position: relative; padding: 0 0 18px 18px; }
+  .tl-item::before {
+    content: '';
+    position: absolute; left: -7px; top: 4px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+  }
+  .tl-time { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
+  .tl-text { font-size: 13px; color: var(--text2); }
+  .tl-text strong { color: var(--text); }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: calc(var(--nav-h) + var(--safe-bot) + 16px); left: 16px; right: 16px;
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 14px; font-weight: 500;
+    z-index: 999;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(20px); opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: rgba(34,197,94,0.4); }
+  #toast.error   { border-color: rgba(239,68,68,0.4); }
+  .toast-icon { font-size: 18px; }
+
+  /* ── MODAL ── */
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 24px 24px 0 0;
+    border-top: 1px solid var(--border2);
+    padding: 24px 20px;
+    padding-bottom: calc(var(--safe-bot) + 24px);
+    width: 100%; max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+
+  /* ── PULSE ANIMATION ── */
+  @keyframes pulse-ring { 0%{transform:scale(1);opacity:0.6} 100%{transform:scale(1.8);opacity:0} }
+  @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  .spin { animation: spin 1s linear infinite; }
+
+  /* ── LIVE DOT ── */
+  .live-dot { display:inline-block;width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulseLive 1.5s ease-in-out infinite; }
+  @keyframes pulseLive { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+
+  /* ── PROGRESS STEPS ── */
+  .steps-bar { display:flex; gap:6px; margin-bottom:20px; }
+  .step { flex:1; height:4px; border-radius:2px; background:var(--border2); transition:background 0.3s; }
+  .step.done { background: var(--accent); }
+  .step.active { background: var(--accent); opacity: 0.5; }
+
+  /* ── GPS BADGE ── */
+  .gps-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.25);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 13px; font-weight: 600; color: var(--green);
+  }
+
+  /* ── HIDDEN FILE INPUT ── */
+  #photoInput { position:absolute; opacity:0; pointer-events:none; width:1px; height:1px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--card2); border-radius: 4px; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeSlideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .animate-in { animation: fadeSlideIn 0.4s ease forwards; }
+  .delay-1 { animation-delay: 0.05s; opacity:0; }
+  .delay-2 { animation-delay: 0.10s; opacity:0; }
+  .delay-3 { animation-delay: 0.15s; opacity:0; }
+  .delay-4 { animation-delay: 0.20s; opacity:0; }
+  .delay-5 { animation-delay: 0.25s; opacity:0; }
+</style>
+</head>
+<body>
+
+<input type="file" id="photoInput" accept="image/*" capture="environment">
+
+<!-- ══════════════════════════════════════
+     LOGIN
+══════════════════════════════════════ -->
+<div id="app">
+<div id="loginScreen" class="screen active" style="position:relative;overflow:hidden">
+  <div class="login-blob login-blob-1"></div>
+  <div class="login-blob login-blob-2"></div>
+
+  <div class="login-logo">
+    <div class="login-logo-icon">🚚</div>
+    <div class="login-logo-text">Car<span>Logistique</span></div>
+  </div>
+  <div class="login-tagline">Application livreur — Connectez-vous pour commencer</div>
+
+  <div class="login-form">
+    <div class="field-group">
+      <label class="field-label">Email</label>
+      <input class="field-input" type="email" id="loginEmail" placeholder="votre@email.com" autocomplete="email">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Mot de passe</label>
+      <input class="field-input" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-main" id="loginBtn" onclick="doLogin()">Se connecter</button>
+    <div class="login-error" id="loginError">
+      <i class="fas fa-exclamation-circle"></i> Email ou mot de passe incorrect
+    </div>
+  </div>
+
+  <div style="position:absolute;bottom:calc(var(--safe-bot)+20px);font-size:11px;color:var(--text3);text-align:center">
+    Car Logistique © 2026 — Application livreur v1.0
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ÉCRAN ACCUEIL
+══════════════════════════════════════ -->
+<div id="homeScreen" class="screen">
+  <div class="topbar">
+    <div style="width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0" id="homeAvatar">AK</div>
+    <div style="flex:1">
+      <div class="topbar-title" id="homeDriverName">Ahmed Khalil</div>
+      <span class="topbar-sub" id="homeDate">Chargement...</span>
+    </div>
+    <div class="topbar-btn" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></div>
+  </div>
+
+  <div class="scroll-area pad" id="homeContent">
+    <!-- GPS badge -->
+    <div class="gps-badge animate-in delay-1" id="gpsBadge">
+      <span class="live-dot"></span>
+      <span id="gpsText">GPS actif — Position envoyée</span>
+    </div>
+
+    <!-- Start day button -->
+    <div id="startDaySection" class="animate-in delay-2">
+      <button class="action-card" onclick="goToStartDay()">
+        <div class="action-card-icon">🚀</div>
+        <div class="action-card-text">
+          <div class="action-card-title">Commencer la journée</div>
+          <div class="action-card-sub">Enregistrer le kilométrage de départ</div>
+        </div>
+      </button>
+    </div>
+
+    <!-- End day button (hidden by default) -->
+    <div id="endDaySection" style="display:none" class="animate-in">
+      <button class="action-card" style="background:linear-gradient(135deg,#dc2626,#b91c1c)" onclick="goToEndDay()">
+        <div class="action-card-icon">🏁</div>
+        <div class="action-card-text">
+          <div class="action-card-title">Terminer la journée</div>
+          <div class="action-card-sub">Photos + kilométrage de fin obligatoires</div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Today stats -->
+    <div id="homeStats" style="display:none">
+      <div class="section-title animate-in delay-2">Journée en cours</div>
+      <div class="stats-row animate-in delay-3">
+        <div class="stat-box">
+          <div class="stat-box-label">Km départ</div>
+          <div class="stat-box-val" id="statKmStart" style="color:var(--accent)">—</div>
+          <div class="stat-box-unit">kilomètres</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Dépenses</div>
+          <div class="stat-box-val" id="statExpenses" style="color:var(--yellow)">0</div>
+          <div class="stat-box-unit">euros</div>
+        </div>
+      </div>
+      <div class="stats-row animate-in delay-4">
+        <div class="stat-box">
+          <div class="stat-box-label">Colis livrés</div>
+          <div class="stat-box-val" id="statDelivered" style="color:var(--blue)">0</div>
+          <div class="stat-box-unit">colis</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Colis ramassés</div>
+          <div class="stat-box-val" id="statPickup" style="color:var(--green)">0</div>
+          <div class="stat-box-unit">colis</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity -->
+    <div class="animate-in delay-5">
+      <div class="section-title">Activité récente</div>
+      <div class="timeline" id="homeTimeline">
+        <div class="tl-item">
+          <div class="tl-time">Aujourd'hui</div>
+          <div class="tl-text">Connecté à l'application</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     DÉBUT DE JOURNÉE
+══════════════════════════════════════ -->
+<div id="startDayScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-btn" onclick="showScreen('home')"><i class="fas fa-arrow-left"></i></div>
+    <div style="flex:1">
+      <div class="topbar-title">Début de journée</div>
+      <span class="topbar-sub" id="startDayDate"></span>
+    </div>
+    <div style="padding:5px 10px;background:rgba(249,115,22,0.15);border-radius:8px;font-size:11px;font-weight:700;color:var(--accent)">ÉTAPE 1/2</div>
+  </div>
+
+  <div class="scroll-area pad no-nav">
+    <div class="steps-bar">
+      <div class="step done"></div>
+      <div class="step active"></div>
+    </div>
+
+    <div class="card animate-in" style="border-color:rgba(249,115,22,0.3);background:rgba(249,115,22,0.05)">
+      <div style="display:flex;gap:12px;align-items:center">
+        <div style="font-size:28px">📋</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:3px">Avant de commencer</div>
+          <div style="font-size:12px;color:var(--text2)">Notez le kilométrage affiché sur votre tableau de bord</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Kilométrage de départ</div>
+    <div class="input-row">
+      <input class="input-box big" type="number" id="kmStartInput" placeholder="48 250" inputmode="numeric" pattern="[0-9]*">
+    </div>
+    <div style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:20px">
+      <i class="fas fa-info-circle"></i> Entrez le nombre exact affiché sur votre compteur
+    </div>
+
+    <button class="btn btn-accent" id="confirmStartBtn" onclick="confirmStartDay()">
+      <i class="fas fa-rocket"></i> Démarrer ma journée
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     DÉPENSES
+══════════════════════════════════════ -->
+<div id="expensesScreen" class="screen">
+  <div class="topbar">
+    <div style="flex:1">
+      <div class="topbar-title">Dépenses</div>
+      <span class="topbar-sub" id="expensesTotal">Total : 0€</span>
+    </div>
+    <button class="topbar-btn" onclick="openAddExpense()" style="background:var(--accent);border-color:var(--accent);color:#fff;width:auto;padding:0 14px;border-radius:10px;font-size:13px;font-weight:700;gap:6px"><i class="fas fa-plus"></i> Ajouter</button>
+  </div>
+
+  <div class="scroll-area pad">
+    <div id="expensesList">
+      <div style="text-align:center;padding:60px 20px;color:var(--text3)">
+        <div style="font-size:40px;margin-bottom:12px">🧾</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px">Aucune dépense</div>
+        <div style="font-size:13px">Appuyez sur + Ajouter pour enregistrer une dépense</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     LIVRAISON
+══════════════════════════════════════ -->
+<div id="deliveryScreen" class="screen">
+  <div class="topbar">
+    <div style="flex:1">
+      <div class="topbar-title">Livraison & Ramassage</div>
+      <span class="topbar-sub">Entrez les données du jour</span>
+    </div>
+    <button class="btn btn-accent btn-sm" style="width:auto;padding:8px 16px" onclick="saveDelivery()"><i class="fas fa-check"></i> Sauvegarder</button>
+  </div>
+
+  <div class="scroll-area pad">
+    <div class="section-title animate-in delay-1">📦 Livraison</div>
+
+    <div class="counter-row animate-in delay-2">
+      <div>
+        <div class="counter-label">Stops livrés</div>
+        <div class="counter-sub">Nombre d'arrêts effectués</div>
+      </div>
+      <div class="counter-btns">
+        <div class="counter-btn" onclick="changeCounter('stopsDelivered',-1)">−</div>
+        <div class="counter-val" id="cnt-stopsDelivered">0</div>
+        <div class="counter-btn" onclick="changeCounter('stopsDelivered',1)">+</div>
+      </div>
+    </div>
+
+    <div class="counter-row animate-in delay-3">
+      <div>
+        <div class="counter-label">Colis livrés</div>
+        <div class="counter-sub">Nombre total de colis</div>
+      </div>
+      <div class="counter-btns">
+        <div class="counter-btn" onclick="changeCounter('packagesDelivered',-1)">−</div>
+        <div class="counter-val" id="cnt-packagesDelivered">0</div>
+        <div class="counter-btn" onclick="changeCounter('packagesDelivered',1)">+</div>
+      </div>
+    </div>
+
+    <div class="input-row animate-in delay-3">
+      <label class="input-label">Exceptions / Remarques</label>
+      <textarea class="input-box" id="exceptionsInput" placeholder="Ex: Client absent au stop 4, colis retourné..." style="min-height:80px;resize:none;font-size:14px;font-weight:400;line-height:1.5" oninput="day.exceptions=this.value"></textarea>
+    </div>
+
+    <div class="section-title animate-in delay-4">📥 Ramassage</div>
+
+    <div class="counter-row animate-in delay-4">
+      <div>
+        <div class="counter-label">Stops ramassés</div>
+        <div class="counter-sub">Nombre d'arrêts de ramassage</div>
+      </div>
+      <div class="counter-btns">
+        <div class="counter-btn" onclick="changeCounter('stopsPickup',-1)">−</div>
+        <div class="counter-val" id="cnt-stopsPickup">0</div>
+        <div class="counter-btn" onclick="changeCounter('stopsPickup',1)">+</div>
+      </div>
+    </div>
+
+    <div class="counter-row animate-in delay-5">
+      <div>
+        <div class="counter-label">Colis ramassés</div>
+        <div class="counter-sub">Nombre total de colis ramassés</div>
+      </div>
+      <div class="counter-btns">
+        <div class="counter-btn" onclick="changeCounter('packagesPickup',-1)">−</div>
+        <div class="counter-val" id="cnt-packagesPickup">0</div>
+        <div class="counter-btn" onclick="changeCounter('packagesPickup',1)">+</div>
+      </div>
+    </div>
+
+    <!-- Totaux live -->
+    <div class="card animate-in" style="border-color:rgba(249,115,22,0.3)" id="liveTotals">
+      <div class="card-title">Totaux en temps réel</div>
+      <div class="summary-row">
+        <span class="summary-key">Total stops</span>
+        <span class="summary-val" id="totalStopsLive" style="color:var(--blue)">0</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Total colis</span>
+        <span class="summary-val" id="totalColisLive" style="color:var(--accent)">0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     FIN DE JOURNÉE
+══════════════════════════════════════ -->
+<div id="endDayScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-btn" onclick="showScreen('home')"><i class="fas fa-arrow-left"></i></div>
+    <div style="flex:1">
+      <div class="topbar-title">Fin de journée</div>
+      <span class="topbar-sub">Complétez toutes les étapes</span>
+    </div>
+  </div>
+
+  <div class="scroll-area pad no-nav">
+    <!-- Checklist -->
+    <div class="card animate-in delay-1" id="endChecklist">
+      <div class="card-title">Étapes obligatoires</div>
+      <div class="check-item">
+        <div class="check-box" id="chk-km"><i class="fas fa-check" style="font-size:11px;color:#fff;display:none"></i></div>
+        <span class="check-label" id="chk-km-label">Kilométrage de fin</span>
+      </div>
+      <div class="check-item">
+        <div class="check-box" id="chk-scan"><i class="fas fa-check" style="font-size:11px;color:#fff;display:none"></i></div>
+        <span class="check-label" id="chk-scan-label">Photo rapport scanner</span>
+      </div>
+      <div class="check-item">
+        <div class="check-box" id="chk-odo"><i class="fas fa-check" style="font-size:11px;color:#fff;display:none"></i></div>
+        <span class="check-label" id="chk-odo-label">Photo kilométrage</span>
+      </div>
+    </div>
+
+    <!-- Résumé journée -->
+    <div class="section-title animate-in delay-2">Résumé de la journée</div>
+    <div class="card animate-in delay-2">
+      <div class="summary-row">
+        <span class="summary-key">Km de départ</span>
+        <span class="summary-val" id="endKmStart">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Colis livrés</span>
+        <span class="summary-val" id="endColis" style="color:var(--blue)">0</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Colis ramassés</span>
+        <span class="summary-val" id="endRamassage" style="color:var(--green)">0</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Dépenses totales</span>
+        <span class="summary-val" id="endExpenses" style="color:var(--yellow)">0€</span>
+      </div>
+    </div>
+
+    <!-- Km fin -->
+    <div class="section-title animate-in delay-3">🔢 Kilométrage de fin</div>
+    <div class="input-row animate-in delay-3">
+      <input class="input-box big" type="number" id="kmEndInput" placeholder="48 490" inputmode="numeric" pattern="[0-9]*" oninput="updateKmEnd()">
+    </div>
+    <div class="card animate-in delay-3" id="kmTotalCard" style="display:none;border-color:rgba(249,115,22,0.3);background:rgba(249,115,22,0.05)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:14px;color:var(--text2)">📏 Km parcourus aujourd'hui</span>
+        <span style="font-size:26px;font-weight:800;color:var(--accent)" id="kmTotalDisplay">0 km</span>
+      </div>
+    </div>
+
+    <!-- Photo scanner -->
+    <div class="section-title animate-in delay-3">📄 Photo rapport scanner</div>
+    <div class="photo-zone animate-in delay-3" id="photoScan" onclick="takePhoto('scan')">
+      <div class="photo-zone-icon">📄</div>
+      <div class="photo-zone-text">Prendre une photo du rapport</div>
+      <div class="photo-zone-hint">Généré par le scanner de livraison</div>
+    </div>
+
+    <!-- Photo kilométrage -->
+    <div class="section-title animate-in delay-4">🚗 Photo du kilométrage</div>
+    <div class="photo-zone animate-in delay-4" id="photoOdo" onclick="takePhoto('odo')">
+      <div class="photo-zone-icon">🚗</div>
+      <div class="photo-zone-text">Photographier le compteur</div>
+      <div class="photo-zone-hint">Compteur kilométrique du véhicule</div>
+    </div>
+
+    <!-- Bouton terminer -->
+    <button class="btn btn-red" id="finishDayBtn" onclick="confirmEndDay()" style="margin-top:8px;margin-bottom:20px" disabled>
+      <i class="fas fa-flag-checkered"></i> Terminer et envoyer la journée
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     NAVIGATION BAS
+══════════════════════════════════════ -->
+<nav class="bottom-nav" id="bottomNav">
+  <div class="nav-btn active" id="nav-home" onclick="navTo('home')">
+    <div class="nav-btn-icon"><i class="fas fa-home"></i></div>
+    <span class="nav-btn-label">Accueil</span>
+  </div>
+  <div class="nav-btn" id="nav-delivery" onclick="navTo('delivery')">
+    <div class="nav-btn-icon"><i class="fas fa-boxes"></i></div>
+    <span class="nav-btn-label">Livraison</span>
+  </div>
+  <div class="nav-btn" id="nav-expenses" onclick="navTo('expenses')">
+    <div class="nav-btn-icon"><i class="fas fa-receipt"></i></div>
+    <span class="nav-btn-label">Dépenses</span>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     MODAL : AJOUTER DÉPENSE
+══════════════════════════════════════ -->
+<div class="modal-bg" id="addExpenseModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nouvelle dépense</div>
+    <div class="modal-sub">Remplissez les informations et prenez une photo du reçu</div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px">TYPE DE DÉPENSE</div>
+    <div class="type-grid" id="expenseTypeGrid">
+      <div class="type-btn selected" data-type="Essence" onclick="selectExpenseType(this)">
+        <div class="type-btn-icon">⛽</div>
+        <div class="type-btn-label">Essence</div>
+      </div>
+      <div class="type-btn" data-type="Péage" onclick="selectExpenseType(this)">
+        <div class="type-btn-icon">🛣️</div>
+        <div class="type-btn-label">Péage</div>
+      </div>
+      <div class="type-btn" data-type="Autre" onclick="selectExpenseType(this)">
+        <div class="type-btn-icon">📌</div>
+        <div class="type-btn-label">Autre</div>
+      </div>
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Montant (€)</label>
+      <input class="input-box" type="number" id="expenseAmount" placeholder="0.00" inputmode="decimal" step="0.01">
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px">
+      PHOTO DU REÇU <span style="color:var(--red)">*</span>
+    </div>
+    <div class="photo-zone" id="expensePhotoZone" onclick="takeExpensePhoto()">
+      <div class="photo-zone-icon">📷</div>
+      <div class="photo-zone-text">Photographier le reçu</div>
+      <div class="photo-zone-hint">Photo obligatoire · Compressée automatiquement</div>
+    </div>
+
+    <div class="btn-row" style="margin-top:6px">
+      <button class="btn btn-ghost" onclick="closeModal('addExpenseModal')">Annuler</button>
+      <button class="btn btn-accent" onclick="confirmAddExpense()" id="addExpenseConfirmBtn">
+        <i class="fas fa-plus"></i> Ajouter
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL : CONFIRMATION FIN DE JOURNÉE
+══════════════════════════════════════ -->
+<div class="modal-bg" id="confirmEndModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:52px;margin-bottom:8px">🏁</div>
+      <div class="modal-title">Terminer la journée ?</div>
+      <div class="modal-sub">Cette action est irréversible. Toutes les données seront envoyées à l'administrateur.</div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="summary-row">
+        <span class="summary-key">Km parcourus</span>
+        <span class="summary-val" id="confirmKmTotal" style="color:var(--accent)">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Total colis</span>
+        <span class="summary-val" id="confirmTotalColis" style="color:var(--blue)">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Total dépenses</span>
+        <span class="summary-val" id="confirmTotalExp" style="color:var(--yellow)">—</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeModal('confirmEndModal')">Retour</button>
+      <button class="btn" style="background:var(--red);color:#fff" onclick="finalizeDay()">
+        <i class="fas fa-check"></i> Confirmer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL : JOURNÉE TERMINÉE ✅
+══════════════════════════════════════ -->
+<div class="modal-bg" id="dayDoneModal">
+  <div class="modal" style="text-align:center">
+    <div class="modal-handle"></div>
+    <div style="font-size:64px;margin-bottom:12px">✅</div>
+    <div class="modal-title" style="font-size:22px">Journée terminée !</div>
+    <div style="font-size:14px;color:var(--text2);margin:10px 0 24px">Toutes les données ont été envoyées à l'administrateur avec succès.</div>
+    <div class="card" style="text-align:left;margin-bottom:20px">
+      <div class="summary-row">
+        <span class="summary-key">Km parcourus</span>
+        <span class="summary-val" id="doneKmTotal" style="color:var(--accent)">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Total colis</span>
+        <span class="summary-val" id="doneTotalColis" style="color:var(--blue)">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Dépenses</span>
+        <span class="summary-val" id="doneTotalExp" style="color:var(--yellow)">—</span>
+      </div>
+    </div>
+    <button class="btn btn-ghost" onclick="closeModal('dayDoneModal');resetDay()">Fermer</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"><span class="toast-icon" id="toastIcon"></span><span id="toastMsg"></span></div>
+
+</div><!-- /#app -->
+
+<script>
+// ══════════════════════════════════════
+// DEMO ACCOUNTS (remplacé par API en production)
+// ══════════════════════════════════════
+const DEMO_ACCOUNTS = [
+  { email:'ahmed.k@carlogistique.com',   password:'Livreur123!', name:'Ahmed Khalil',    initials:'AK' },
+  { email:'mehdi.b@carlogistique.com',   password:'Livreur123!', name:'Mehdi Benali',     initials:'MB' },
+  { email:'karim.l@carlogistique.com',   password:'Livreur123!', name:'Karim Larbi',      initials:'KL' },
+  { email:'youssef.m@carlogistique.com', password:'Livreur123!', name:'Youssef Mansouri', initials:'YM' },
+  // Compte test facile
+  { email:'test@test.com', password:'test', name:'Livreur Test', initials:'LT' },
+];
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let currentUser = null;
+let currentScreen = 'login';
+let photoCallback = null;
+let expensePhotoData = null;
+let scanPhotoData = null;
+let odoPhotoData = null;
+
+let day = {
+  started: false,
+  ended: false,
+  date: null,
+  kmStart: null,
+  kmEnd: null,
+  stopsDelivered: 0,
+  packagesDelivered: 0,
+  stopsPickup: 0,
+  packagesPickup: 0,
+  exceptions: '',
+  expenses: [],
+};
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  // Check saved session
+  const saved = localStorage.getItem('cl_session');
+  if (saved) {
+    try {
+      const s = JSON.parse(saved);
+      currentUser = s.user;
+      day = s.day || day;
+      initApp();
+      showScreen('home');
+    } catch(e) { localStorage.removeItem('cl_session'); }
+  }
+
+  // Set today date
+  const today = new Date();
+  document.getElementById('startDayDate').textContent = today.toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  // Photo input handler
+  document.getElementById('photoInput').addEventListener('change', handlePhotoCapture);
+
+  // GPS simulation
+  startGPS();
+});
+
+// ══════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  const btn   = document.getElementById('loginBtn');
+
+  errEl.style.display = 'none';
+  btn.textContent = 'Connexion...'; btn.disabled = true;
+
+  setTimeout(() => {
+    const account = DEMO_ACCOUNTS.find(a => a.email.toLowerCase() === email && a.password === pass);
+    if (account) {
+      currentUser = account;
+      saveSession();
+      initApp();
+      showScreen('home');
+      showToast(`Bienvenue, ${account.name.split(' ')[0]} ! 👋`, 'success');
+    } else {
+      errEl.style.display = 'block';
+      btn.textContent = 'Se connecter'; btn.disabled = false;
+    }
+  }, 600);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && currentScreen === 'login') doLogin();
+});
+
+function doLogout() {
+  if (!confirm('Se déconnecter ?')) return;
+  currentUser = null;
+  localStorage.removeItem('cl_session');
+  day = { started:false, ended:false, date:null, kmStart:null, kmEnd:null, stopsDelivered:0, packagesDelivered:0, stopsPickup:0, packagesPickup:0, exceptions:'', expenses:[] };
+  showScreen('login');
+}
+
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id + 'Screen') || document.getElementById(id);
+  if (target) target.classList.add('active');
+  currentScreen = id;
+
+  const noNavScreens = ['startDay','endDay'];
+  const nav = document.getElementById('bottomNav');
+  nav.style.display = noNavScreens.includes(id) ? 'none' : 'flex';
+}
+
+function navTo(id) {
+  if (!day.started && (id === 'delivery' || id === 'expenses')) {
+    showToast('Commencez d\'abord votre journée', 'error');
+    return;
+  }
+  showScreen(id);
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const navBtn = document.getElementById('nav-' + id);
+  if (navBtn) navBtn.classList.add('active');
+}
+
+function goToStartDay() {
+  if (day.started) { showToast('Journée déjà démarrée', 'error'); return; }
+  showScreen('startDay');
+}
+
+function goToEndDay() {
+  showScreen('endDay');
+  updateEndDayUI();
+}
+
+// ══════════════════════════════════════
+// START DAY
+// ══════════════════════════════════════
+function confirmStartDay() {
+  const km = parseInt(document.getElementById('kmStartInput').value);
+  if (!km || km < 100) { showToast('Entrez un kilométrage valide', 'error'); return; }
+
+  day.started = true;
+  day.date = new Date().toISOString().split('T')[0];
+  day.kmStart = km;
+
+  saveSession();
+  updateHomeUI();
+  showScreen('home');
+  showToast(`🚀 Journée démarrée ! Km départ : ${km.toLocaleString()}`, 'success');
+  addTimeline(`Journée démarrée — Km départ : <strong>${km.toLocaleString()}</strong>`);
+}
+
+// ══════════════════════════════════════
+// COUNTERS (Livraison / Ramassage)
+// ══════════════════════════════════════
+function changeCounter(field, delta) {
+  day[field] = Math.max(0, (day[field] || 0) + delta);
+  document.getElementById('cnt-' + field).textContent = day[field];
+  updateLiveTotals();
+  saveSession();
+}
+
+function updateLiveTotals() {
+  const ts = (day.stopsDelivered||0) + (day.stopsPickup||0);
+  const tc = (day.packagesDelivered||0) + (day.packagesPickup||0);
+  const el1 = document.getElementById('totalStopsLive');
+  const el2 = document.getElementById('totalColisLive');
+  if (el1) el1.textContent = ts;
+  if (el2) el2.textContent = tc;
+}
+
+function saveDelivery() {
+  day.exceptions = document.getElementById('exceptionsInput').value;
+  saveSession();
+  updateHomeUI();
+  showToast('✅ Données de livraison sauvegardées', 'success');
+  addTimeline(`Livraison mise à jour — <strong>${day.packagesDelivered}</strong> colis livrés, <strong>${day.packagesPickup}</strong> ramassés`);
+  navTo('home');
+}
+
+// ══════════════════════════════════════
+// EXPENSES
+// ══════════════════════════════════════
+let selectedExpenseType = 'Essence';
+
+function selectExpenseType(el) {
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedExpenseType = el.dataset.type;
+}
+
+function openAddExpense() {
+  if (!day.started) { showToast('Commencez d\'abord votre journée', 'error'); return; }
+  expensePhotoData = null;
+  document.getElementById('expenseAmount').value = '';
+  const zone = document.getElementById('expensePhotoZone');
+  zone.classList.remove('has-photo');
+  zone.innerHTML = `
+    <div class="photo-zone-icon">📷</div>
+    <div class="photo-zone-text">Photographier le reçu</div>
+    <div class="photo-zone-hint">Photo obligatoire · Compressée automatiquement</div>
+  `;
+  document.getElementById('addExpenseModal').classList.add('open');
+}
+
+function takeExpensePhoto() {
+  photoCallback = 'expense';
+  document.getElementById('photoInput').click();
+}
+
+function confirmAddExpense() {
+  const amount = parseFloat(document.getElementById('expenseAmount').value);
+  if (!amount || amount <= 0) { showToast('Entrez un montant valide', 'error'); return; }
+  if (!expensePhotoData) { showToast('La photo du reçu est obligatoire', 'error'); return; }
+
+  const expense = {
+    id: Date.now(),
+    type: selectedExpenseType,
+    amount,
+    photo: expensePhotoData,
+    time: new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}),
+  };
+  day.expenses.push(expense);
+  saveSession();
+  renderExpenses();
+  updateHomeUI();
+  closeModal('addExpenseModal');
+  showToast(`✅ Dépense ajoutée : ${amount}€ (${selectedExpenseType})`, 'success');
+  addTimeline(`Dépense ajoutée — <strong>${amount}€</strong> (${selectedExpenseType})`);
+}
+
+function renderExpenses() {
+  const list = document.getElementById('expensesList');
+  const total = day.expenses.reduce((s,e) => s+e.amount, 0);
+  document.getElementById('expensesTotal').textContent = `Total : ${total}€`;
+
+  if (!day.expenses.length) {
+    list.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text3)">
+      <div style="font-size:40px;margin-bottom:12px">🧾</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px">Aucune dépense</div>
+      <div style="font-size:13px">Appuyez sur + Ajouter pour enregistrer une dépense</div>
+    </div>`;
+    return;
+  }
+
+  const icons = { Essence:'⛽', Péage:'🛣️', Autre:'📌' };
+  const colors = { Essence:'rgba(249,115,22,0.15)', Péage:'rgba(59,130,246,0.15)', Autre:'rgba(168,85,247,0.15)' };
+
+  list.innerHTML = day.expenses.map(e => `
+    <div class="expense-item">
+      <div class="expense-icon" style="background:${colors[e.type]||'rgba(255,255,255,0.05)'}">
+        ${icons[e.type]||'📌'}
+      </div>
+      <div class="expense-info">
+        <div class="expense-type">${e.type}</div>
+        <div class="expense-time">${e.time} · <span style="color:var(--green)">📷 Reçu</span></div>
+      </div>
+      <div class="expense-amount">${e.amount}€</div>
+      <div onclick="deleteExpense(${e.id})" style="padding:8px;color:var(--text3);cursor:pointer;font-size:14px">
+        <i class="fas fa-trash-alt"></i>
+      </div>
+    </div>
+  `).join('') + `
+    <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+      <span style="font-size:14px;font-weight:700">Total dépenses</span>
+      <span style="font-size:22px;font-weight:800;color:var(--yellow)">${total}€</span>
+    </div>
+  `;
+}
+
+function deleteExpense(id) {
+  if (!confirm('Supprimer cette dépense ?')) return;
+  day.expenses = day.expenses.filter(e => e.id !== id);
+  saveSession();
+  renderExpenses();
+  updateHomeUI();
+  showToast('Dépense supprimée', 'success');
+}
+
+// ══════════════════════════════════════
+// END DAY
+// ══════════════════════════════════════
+function updateKmEnd() {
+  const km = parseInt(document.getElementById('kmEndInput').value);
+  const card = document.getElementById('kmTotalCard');
+  const display = document.getElementById('kmTotalDisplay');
+  const chk = document.getElementById('chk-km');
+  const lbl = document.getElementById('chk-km-label');
+
+  if (km && day.kmStart && km > day.kmStart) {
+    const total = km - day.kmStart;
+    display.textContent = `${total} km`;
+    card.style.display = 'block';
+    chk.classList.add('done'); chk.querySelector('i').style.display = 'block';
+    lbl.classList.add('done');
+    day.kmEnd = km;
+  } else {
+    card.style.display = 'none';
+    chk.classList.remove('done'); chk.querySelector('i').style.display = 'none';
+    lbl.classList.remove('done');
+  }
+  checkFinishReady();
+}
+
+function takePhoto(type) {
+  photoCallback = type;
+  document.getElementById('photoInput').click();
+}
+
+function checkFinishReady() {
+  const btn = document.getElementById('finishDayBtn');
+  const kmOk  = day.kmEnd && day.kmEnd > day.kmStart;
+  const scanOk = !!scanPhotoData;
+  const odoOk  = !!odoPhotoData;
+  btn.disabled = !(kmOk && scanOk && odoOk);
+}
+
+function confirmEndDay() {
+  const kmTotal = day.kmEnd - day.kmStart;
+  const totalColis = (day.packagesDelivered||0) + (day.packagesPickup||0);
+  const totalExp = day.expenses.reduce((s,e)=>s+e.amount,0);
+  document.getElementById('confirmKmTotal').textContent = `${kmTotal} km`;
+  document.getElementById('confirmTotalColis').textContent = totalColis;
+  document.getElementById('confirmTotalExp').textContent = `${totalExp}€`;
+  document.getElementById('confirmEndModal').classList.add('open');
+}
+
+function finalizeDay() {
+  closeModal('confirmEndModal');
+  day.ended = true;
+
+  const kmTotal = day.kmEnd - day.kmStart;
+  const totalColis = (day.packagesDelivered||0) + (day.packagesPickup||0);
+  const totalExp = day.expenses.reduce((s,e)=>s+e.amount,0);
+
+  document.getElementById('doneKmTotal').textContent = `${kmTotal} km`;
+  document.getElementById('doneTotalColis').textContent = totalColis;
+  document.getElementById('doneTotalExp').textContent = `${totalExp}€`;
+
+  saveSession();
+  setTimeout(() => {
+    document.getElementById('dayDoneModal').classList.add('open');
+  }, 300);
+}
+
+function resetDay() {
+  day = { started:false, ended:false, date:null, kmStart:null, kmEnd:null, stopsDelivered:0, packagesDelivered:0, stopsPickup:0, packagesPickup:0, exceptions:'', expenses:[] };
+  scanPhotoData = null; odoPhotoData = null;
+  saveSession();
+  updateHomeUI();
+  showScreen('home');
+}
+
+function updateEndDayUI() {
+  document.getElementById('endKmStart').textContent = day.kmStart ? `${day.kmStart.toLocaleString()} km` : '—';
+  document.getElementById('endColis').textContent = day.packagesDelivered || 0;
+  document.getElementById('endRamassage').textContent = day.packagesPickup || 0;
+  document.getElementById('endExpenses').textContent = `${day.expenses.reduce((s,e)=>s+e.amount,0)}€`;
+  checkFinishReady();
+}
+
+// ══════════════════════════════════════
+// HOME UI UPDATE
+// ══════════════════════════════════════
+function initApp() {
+  if (!currentUser) return;
+  document.getElementById('homeDriverName').textContent = currentUser.name;
+  document.getElementById('homeAvatar').textContent = currentUser.initials;
+  document.getElementById('homeDate').textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+
+  // Restore counters
+  ['stopsDelivered','packagesDelivered','stopsPickup','packagesPickup'].forEach(f => {
+    const el = document.getElementById('cnt-' + f);
+    if (el) el.textContent = day[f] || 0;
+  });
+  if (day.exceptions) {
+    const el = document.getElementById('exceptionsInput');
+    if (el) el.value = day.exceptions;
+  }
+  updateLiveTotals();
+  renderExpenses();
+  updateHomeUI();
+}
+
+function updateHomeUI() {
+  const started = day.started && !day.ended;
+  const ended = day.ended;
+
+  document.getElementById('startDaySection').style.display = day.started ? 'none' : 'block';
+  document.getElementById('endDaySection').style.display   = started ? 'block' : 'none';
+  document.getElementById('homeStats').style.display       = started ? 'block' : 'none';
+
+  if (started || ended) {
+    document.getElementById('statKmStart').textContent = day.kmStart?.toLocaleString() || '—';
+    document.getElementById('statExpenses').textContent = day.expenses.reduce((s,e)=>s+e.amount,0);
+    document.getElementById('statDelivered').textContent = day.packagesDelivered || 0;
+    document.getElementById('statPickup').textContent = day.packagesPickup || 0;
+  }
+}
+
+function addTimeline(html) {
+  const tl = document.getElementById('homeTimeline');
+  const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const item = document.createElement('div');
+  item.className = 'tl-item';
+  item.innerHTML = `<div class="tl-time">${now}</div><div class="tl-text">${html}</div>`;
+  tl.insertBefore(item, tl.firstChild);
+}
+
+// ══════════════════════════════════════
+// PHOTO HANDLING
+// ══════════════════════════════════════
+function handlePhotoCapture(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    compressImage(dataUrl, 1200, 0.75, (compressed) => {
+      if (photoCallback === 'expense') {
+        expensePhotoData = compressed;
+        const zone = document.getElementById('expensePhotoZone');
+        zone.classList.add('has-photo');
+        zone.innerHTML = `
+          <img src="${compressed}" alt="Reçu">
+          <div class="photo-zone-overlay">
+            <div style="font-size:24px">✅</div>
+            <div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.7)">Appuyez pour reprendre</div>
+          </div>
+          <div class="photo-badge">✓ OK</div>
+        `;
+      } else if (photoCallback === 'scan') {
+        scanPhotoData = compressed;
+        const zone = document.getElementById('photoScan');
+        zone.classList.add('has-photo');
+        zone.innerHTML = `
+          <img src="${compressed}" alt="Rapport scanner">
+          <div class="photo-zone-overlay">
+            <div style="font-size:24px">✅</div>
+            <div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div>
+          </div>
+          <div class="photo-badge">✓ OK</div>
+        `;
+        const chk = document.getElementById('chk-scan');
+        chk.classList.add('done'); chk.querySelector('i').style.display = 'block';
+        document.getElementById('chk-scan-label').classList.add('done');
+        checkFinishReady();
+        showToast('📄 Photo rapport enregistrée', 'success');
+      } else if (photoCallback === 'odo') {
+        odoPhotoData = compressed;
+        const zone = document.getElementById('photoOdo');
+        zone.classList.add('has-photo');
+        zone.innerHTML = `
+          <img src="${compressed}" alt="Kilométrage">
+          <div class="photo-zone-overlay">
+            <div style="font-size:24px">✅</div>
+            <div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div>
+          </div>
+          <div class="photo-badge">✓ OK</div>
+        `;
+        const chk = document.getElementById('chk-odo');
+        chk.classList.add('done'); chk.querySelector('i').style.display = 'block';
+        document.getElementById('chk-odo-label').classList.add('done');
+        checkFinishReady();
+        showToast('🚗 Photo kilométrage enregistrée', 'success');
+      }
+    });
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function compressImage(dataUrl, maxW, quality, callback) {
+  const img = new Image();
+  img.onload = () => {
+    const ratio = Math.min(1, maxW / img.width);
+    const canvas = document.createElement('canvas');
+    canvas.width  = img.width  * ratio;
+    canvas.height = img.height * ratio;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    callback(canvas.toDataURL('image/jpeg', quality));
+  };
+  img.src = dataUrl;
+}
+
+// ══════════════════════════════════════
+// GPS SIMULATION
+// ══════════════════════════════════════
+function startGPS() {
+  if ('geolocation' in navigator) {
+    navigator.geolocation.watchPosition(
+      pos => {
+        document.getElementById('gpsText').textContent =
+          `GPS actif — ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+      },
+      () => {
+        document.getElementById('gpsText').textContent = 'GPS — Localisation en arrière-plan';
+      },
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 }
+    );
+  }
+}
+
+// ══════════════════════════════════════
+// MODAL / TOAST / SESSION
+// ══════════════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-bg').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  const ic = document.getElementById('toastIcon');
+  const m = document.getElementById('toastMsg');
+  t.className = `show ${type}`;
+  ic.textContent = type === 'success' ? '✅' : '❌';
+  m.textContent = msg;
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.className = ''; }, 3500);
+}
+
+function saveSession() {
+  if (!currentUser) return;
+  localStorage.setItem('cl_session', JSON.stringify({ user: currentUser, day }));
+}
+</script>
+</body>
+</html>
