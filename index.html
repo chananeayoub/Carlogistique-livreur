@@ -7,1581 +7,2151 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CarLogistique">
 <meta name="theme-color" content="#0a0d14">
-<title>Car Logistique — Livreur</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<title>Car Logistique</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 <style>
-  :root {
-    --bg:       #0a0d14;
-    --bg2:      #0f1219;
-    --card:     #141720;
-    --card2:    #1a1e2a;
-    --border:   rgba(255,255,255,0.07);
-    --border2:  rgba(255,255,255,0.12);
-    --accent:   #f97316;
-    --accent2:  #ea6a00;
-    --glow:     rgba(249,115,22,0.3);
-    --blue:     #3b82f6;
-    --green:    #22c55e;
-    --red:      #ef4444;
-    --yellow:   #f59e0b;
-    --purple:   #a855f7;
-    --text:     #f0f4ff;
-    --text2:    #8892a4;
-    --text3:    #4a5568;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bot: env(safe-area-inset-bottom, 0px);
-    --nav-h:    70px;
-  }
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:'Outfit',sans-serif;background:#0a0d14;color:#f0f4ff;overflow:hidden}
+:root{
+  --bg:#0a0d14;--card:#141720;--card2:#1a1e2a;
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.13);
+  --ac:#f97316;--ac2:#ea6a00;--glow:rgba(249,115,22,.28);
+  --blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;
+  --t1:#f0f4ff;--t2:#8892a4;--t3:#4a5568;
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
+}
+#app{position:fixed;inset:0;overflow:hidden}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;background:var(--bg);overflow:hidden}
+.screen.on{display:flex}
 
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+/* LOGIN */
+#scLogin{overflow-y:auto;align-items:center;justify-content:center;padding:calc(var(--sat) + 40px) 20px calc(var(--sab) + 40px)}
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.logo-ico{width:52px;height:52px;background:var(--ac);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 8px 24px var(--glow);flex-shrink:0}
+.logo-txt{font-size:26px;font-weight:800}
+.logo-txt span{color:var(--ac)}
+.login-sub{font-size:13px;color:var(--t2);margin-bottom:28px;text-align:center}
+.login-card{width:100%;max-width:360px;background:var(--card);border:1.5px solid var(--b2);border-radius:20px;padding:24px 20px}
+.flbl{display:block;font-size:11px;font-weight:700;color:var(--t2);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
+.finp{width:100%;background:#0f1219;border:1.5px solid var(--b2);border-radius:12px;padding:14px 16px;color:var(--t1);font-family:'Outfit',sans-serif;font-size:16px;outline:none;transition:border-color .2s;margin-bottom:14px;display:block}
+.finp:focus{border-color:var(--ac)}
+.finp::placeholder{color:var(--t3)}
+.login-btn{width:100%;background:var(--ac);color:#fff;border:none;border-radius:12px;padding:15px;font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px var(--glow);transition:opacity .2s}
+.login-btn:active{opacity:.85}
+.login-err{color:var(--red);font-size:13px;margin-top:12px;text-align:center;display:none}
+.login-footer{font-size:11px;color:var(--t3);margin-top:20px;text-align:center}
 
-  html, body {
-    height: 100%;
-    font-family: 'Outfit', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    overflow: hidden;
-    overscroll-behavior: none;
-  }
+/* TOPBAR */
+.topbar{flex-shrink:0;padding:calc(var(--sat) + 12px) 16px 12px;background:rgba(10,13,20,.95);border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:10px;z-index:10}
+.tbtitle{font-size:17px;font-weight:700;flex:1}
+.tbsub{font-size:11px;color:var(--t2);display:block;margin-top:1px}
+.tbbtn{width:36px;height:36px;background:var(--card2);border:1px solid var(--b2);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--t2);flex-shrink:0}
+.tbbadge{padding:4px 10px;background:rgba(249,115,22,.15);border-radius:8px;font-size:10px;font-weight:700;color:var(--ac)}
 
-  /* ── APP SHELL ── */
-  #app { height: 100vh; display: flex; flex-direction: column; position: relative; }
+/* SCROLL */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px calc(var(--sab) + 84px)}
+.content.nonav{padding-bottom:calc(var(--sab) + 24px)}
 
-  /* ── SCREENS ── */
-  .screen {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.25s ease, transform 0.25s ease;
-    transform: translateY(12px);
-    overflow: hidden;
-  }
-  .screen.active {
-    opacity: 1; pointer-events: all;
-    transform: translateY(0);
-  }
+/* BOTTOM NAV */
+.bnav{flex-shrink:0;height:calc(56px + var(--sab));padding-bottom:var(--sab);background:rgba(10,13,20,.97);border-top:1px solid var(--b1);display:flex;align-items:center}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:6px 0}
+.nbico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .15s}
+.nbico i{color:var(--t3);transition:color .15s}
+.nblbl{font-size:10px;font-weight:600;color:var(--t3);transition:color .15s}
+.nb.on .nbico{background:rgba(249,115,22,.15)}
+.nb.on .nbico i{color:var(--ac)}
+.nb.on .nblbl{color:var(--ac)}
 
-  /* ── SCROLLABLE CONTENT ── */
-  .scroll-area {
-    flex: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: calc(var(--nav-h) + var(--safe-bot) + 20px);
-    padding-top: calc(var(--safe-top) + 60px);
-  }
-  .scroll-area.no-nav { padding-bottom: 20px; }
-  .pad { padding: 0 18px; }
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--b1);border-radius:16px;padding:15px;margin-bottom:13px}
+.cardttl{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:11px}
 
-  /* ── LOGIN ── */
-  #loginScreen {
-    background: var(--bg);
-    justify-content: center;
-    align-items: center;
-    padding: 32px 24px;
-    padding-top: calc(var(--safe-top) + 32px);
-    padding-bottom: calc(var(--safe-bot) + 32px);
-    gap: 0;
-  }
-  .login-blob {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(60px);
-    pointer-events: none;
-  }
-  .login-blob-1 { width:250px;height:250px;background:rgba(249,115,22,0.12);top:-50px;right:-80px; }
-  .login-blob-2 { width:200px;height:200px;background:rgba(59,130,246,0.08);bottom:80px;left:-60px; }
+/* ACTION CARD */
+.acard{background:linear-gradient(135deg,var(--ac),var(--ac2));border-radius:18px;padding:20px 18px;margin-bottom:13px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;border:none;width:100%;cursor:pointer;text-align:left;box-shadow:0 8px 24px var(--glow)}
+.acard::before{content:'';position:absolute;top:-40px;right:-40px;width:100px;height:100px;background:rgba(255,255,255,.1);border-radius:50%}
+.acard:active{opacity:.9}
+.acard-ico{font-size:28px;position:relative;flex-shrink:0}
+.acard-ttl{font-size:16px;font-weight:800;color:#fff}
+.acard-sub{font-size:12px;color:rgba(255,255,255,.75);margin-top:2px}
 
-  .login-logo {
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 36px;
-  }
-  .login-logo-icon {
-    width: 52px; height: 52px;
-    background: var(--accent);
-    border-radius: 16px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 26px;
-    box-shadow: 0 8px 24px var(--glow);
-  }
-  .login-logo-text { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
-  .login-logo-text span { color: var(--accent); }
-  .login-tagline { font-size: 13px; color: var(--text2); margin-bottom: 40px; }
-  .login-form { width: 100%; max-width: 360px; }
+/* STATS */
+.srow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px}
+.sbox{background:var(--card);border:1px solid var(--b1);border-radius:14px;padding:13px}
+.sbox-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.sbox-val{font-size:24px;font-weight:800;line-height:1}
+.sbox-unit{font-size:11px;color:var(--t2);margin-top:3px}
 
-  .field-group { margin-bottom: 16px; }
-  .field-label { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: block; }
-  .field-input {
-    width: 100%;
-    background: var(--card);
-    border: 1.5px solid var(--border2);
-    border-radius: 14px;
-    padding: 15px 16px;
-    color: var(--text);
-    font-family: 'Outfit', sans-serif;
-    font-size: 16px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    -webkit-appearance: none;
-  }
-  .field-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
-  .field-input::placeholder { color: var(--text3); }
+/* SECTION TITLE */
+.sec{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin:4px 0 11px;display:flex;align-items:center;gap:8px}
+.sec::after{content:'';flex:1;height:1px;background:var(--b1)}
 
-  .btn-main {
-    width: 100%;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 16px;
-    padding: 17px;
-    font-family: 'Outfit', sans-serif;
-    font-size: 17px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 8px;
-    transition: all 0.2s;
-    box-shadow: 0 8px 24px var(--glow);
-    position: relative;
-    overflow: hidden;
-    -webkit-appearance: none;
-  }
-  .btn-main:active { transform: scale(0.97); box-shadow: 0 4px 12px var(--glow); }
-  .btn-main:disabled { opacity: 0.5; pointer-events: none; }
-  .btn-main.loading::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: rgba(0,0,0,0.2);
-  }
-  .login-error { color: var(--red); font-size: 13px; margin-top: 12px; text-align: center; display: none; }
+/* INPUTS */
+.ilbl{display:block;font-size:11px;font-weight:700;color:var(--t2);letter-spacing:.8px;text-transform:uppercase;margin-bottom:7px}
+.ibox{width:100%;background:var(--card2);border:1.5px solid var(--b2);border-radius:12px;padding:13px 15px;color:var(--t1);font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;outline:none;display:block;margin-bottom:13px}
+.ibox:focus{border-color:var(--ac)}
+.ibox::placeholder{color:var(--t3);font-weight:400}
+.ibox.big{font-size:28px;font-weight:800;text-align:center;padding:16px;letter-spacing:1px}
+textarea.ibox{resize:none;min-height:72px;font-size:14px;font-weight:400;line-height:1.5}
 
-  /* ── TOP BAR ── */
-  .topbar {
-    position: fixed; top: 0; left: 0; right: 0;
-    z-index: 50;
-    padding: calc(var(--safe-top) + 14px) 18px 14px;
-    background: rgba(10,13,20,0.92);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 12px;
-  }
-  .topbar-title { font-size: 18px; font-weight: 700; flex: 1; letter-spacing: -0.3px; }
-  .topbar-sub { font-size: 11px; color: var(--text2); display: block; font-weight: 400; }
-  .topbar-btn {
-    width: 38px; height: 38px;
-    background: var(--card2);
-    border: 1px solid var(--border2);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-size: 15px; color: var(--text2);
-    transition: all 0.15s;
-    flex-shrink: 0;
-  }
-  .topbar-btn:active { background: var(--card); }
+/* BUTTONS */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;border-radius:12px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;width:100%}
+.btn:active{opacity:.85}
+.btn:disabled{opacity:.4;pointer-events:none}
+.btn-ac{background:var(--ac);color:#fff;box-shadow:0 4px 16px var(--glow)}
+.btn-ghost{background:var(--card2);color:var(--t2);border:1.5px solid var(--b2)}
+.btn-red{background:rgba(239,68,68,.15);color:var(--red);border:1.5px solid rgba(239,68,68,.3)}
+.btn-sm{padding:9px 13px;font-size:12px;border-radius:9px;width:auto}
+.btn2col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px}
 
-  /* ── BOTTOM NAV ── */
-  .bottom-nav {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    height: calc(var(--nav-h) + var(--safe-bot));
-    padding-bottom: var(--safe-bot);
-    background: rgba(14,17,25,0.97);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-around;
-    z-index: 100;
-  }
-  .nav-btn {
-    flex: 1;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 4px;
-    padding: 8px 0 0;
-    cursor: pointer;
-    transition: all 0.15s;
-    position: relative;
-  }
-  .nav-btn-icon {
-    width: 40px; height: 40px;
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    transition: all 0.2s;
-    background: transparent;
-  }
-  .nav-btn.active .nav-btn-icon { background: rgba(249,115,22,0.15); }
-  .nav-btn-label { font-size: 10px; font-weight: 600; color: var(--text3); transition: color 0.15s; }
-  .nav-btn.active .nav-btn-label { color: var(--accent); }
-  .nav-btn.active .nav-btn-icon { color: var(--accent); }
-  .nav-btn-icon i { color: var(--text3); transition: color 0.15s; }
-  .nav-btn.active .nav-btn-icon i { color: var(--accent); }
+/* COUNTER */
+.crow{display:flex;align-items:center;gap:12px;background:var(--card2);border:1.5px solid var(--b2);border-radius:14px;padding:12px 13px;margin-bottom:11px}
+.cinfo{flex:1}
+.clbl{font-size:15px;font-weight:600}
+.csub{font-size:11px;color:var(--t2);margin-top:2px}
+.cctrl{display:flex;align-items:center;gap:10px}
+.cbtn{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--b2);background:var(--card);color:var(--t1);font-size:22px;font-weight:300;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;user-select:none;-webkit-user-select:none}
+.cbtn:active{background:var(--ac);border-color:var(--ac);color:#fff}
+.cnum{font-size:20px;font-weight:800;min-width:38px;text-align:center;background:var(--card);border:1.5px solid var(--b2);border-radius:10px;padding:7px 4px;outline:none;-webkit-user-select:none;user-select:none}
+.cnum:focus{border-color:var(--ac)}
 
-  /* ── CARDS ── */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 18px;
-    margin-bottom: 14px;
-    transition: border-color 0.2s;
-  }
-  .card:active { border-color: var(--border2); }
-  .card-title { font-size: 13px; font-weight: 700; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 14px; }
+/* PHOTO */
+.pzone{background:var(--card2);border:2px dashed var(--b2);border-radius:14px;padding:24px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;margin-bottom:13px;position:relative;overflow:hidden;min-height:110px;justify-content:center}
+.pzone:active{border-color:var(--ac)}
+.pzone.done{border-style:solid;border-color:var(--green)}
+.pzone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:12px}
+.pzone-ov{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:12px}
+.pbadge{position:absolute;top:8px;right:8px;background:var(--green);color:#fff;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;z-index:2}
 
-  /* ── STATUS BADGE ── */
-  .status-pill {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px; font-weight: 700;
-  }
-  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .pill-green  { background: rgba(34,197,94,0.15);  color: var(--green); }
-  .pill-orange { background: rgba(249,115,22,0.15); color: var(--accent); }
-  .pill-gray   { background: rgba(74,85,104,0.3);   color: var(--text2); }
-  .pill-red    { background: rgba(239,68,68,0.15);  color: var(--red); }
+/* EXPENSE */
+.eitem{display:flex;align-items:center;gap:10px;padding:12px;background:var(--card);border:1px solid var(--b1);border-radius:13px;margin-bottom:9px}
+.eico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.einfo{flex:1;min-width:0}
+.etype{font-size:14px;font-weight:700}
+.etime{font-size:11px;color:var(--t3);margin-top:1px}
+.eamt{font-size:16px;font-weight:800;color:var(--yellow)}
+.edel{padding:8px;color:var(--t3);cursor:pointer;font-size:13px}
 
-  /* ── BIG ACTION BUTTON ── */
-  .action-card {
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-    border-radius: 22px;
-    padding: 24px 22px;
-    margin-bottom: 14px;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 12px 32px var(--glow);
-    display: flex; align-items: center; gap: 16px;
-    position: relative; overflow: hidden;
-    border: none;
-    width: 100%;
-    text-align: left;
-  }
-  .action-card::before {
-    content: '';
-    position: absolute;
-    top: -40px; right: -40px;
-    width: 120px; height: 120px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 50%;
-  }
-  .action-card:active { transform: scale(0.97); }
-  .action-card-icon { font-size: 32px; flex-shrink: 0; position: relative; }
-  .action-card-text {}
-  .action-card-title { font-size: 18px; font-weight: 800; color: #fff; }
-  .action-card-sub { font-size: 13px; color: rgba(255,255,255,0.75); margin-top: 3px; }
+/* SUMMARY */
+.sumrow{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--b1)}
+.sumrow:last-child{border-bottom:none}
+.sumkey{font-size:13px;color:var(--t2)}
+.sumval{font-size:14px;font-weight:700}
 
-  /* ── STAT ROW ── */
-  .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .stat-box {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px 14px;
-  }
-  .stat-box-label { font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
-  .stat-box-val { font-size: 28px; font-weight: 800; line-height: 1; }
-  .stat-box-unit { font-size: 13px; font-weight: 500; color: var(--text2); margin-top: 3px; }
+/* CHECKLIST */
+.chkrow{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--b1)}
+.chkrow:last-child{border-bottom:none}
+.chkbox{width:24px;height:24px;border-radius:7px;border:2px solid var(--b2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.chkbox.done{background:var(--green);border-color:var(--green)}
+.chkico{font-size:10px;color:#fff;display:none}
+.chklbl{font-size:14px}
+.chklbl.done{color:var(--t2);text-decoration:line-through}
 
-  /* ── INPUT FIELD ── */
-  .input-row { margin-bottom: 14px; }
-  .input-label { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px; display: block; }
-  .input-box {
-    width: 100%;
-    background: var(--card2);
-    border: 1.5px solid var(--border2);
-    border-radius: 14px;
-    padding: 14px 16px;
-    color: var(--text);
-    font-family: 'Outfit', sans-serif;
-    font-size: 17px;
-    font-weight: 600;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    -webkit-appearance: none;
-  }
-  .input-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
-  .input-box::placeholder { color: var(--text3); font-weight: 400; }
-  .input-box.big { font-size: 28px; font-weight: 800; text-align: center; padding: 18px; letter-spacing: 1px; }
+/* TIMELINE */
+.tl{padding-left:14px;border-left:2px solid var(--b1)}
+.tli{position:relative;padding:0 0 14px 14px}
+.tli::before{content:'';position:absolute;left:-7px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--ac);border:2px solid var(--bg)}
+.tlt{font-size:11px;color:var(--t3);margin-bottom:2px}
+.tltx{font-size:13px;color:var(--t2)}
+.tltx strong{color:var(--t1)}
 
-  /* ── BUTTON VARIANTS ── */
-  .btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 14px 20px;
-    border-radius: 14px;
-    font-family: 'Outfit', sans-serif;
-    font-size: 15px; font-weight: 700;
-    cursor: pointer; border: none;
-    transition: all 0.2s;
-    width: 100%;
-    -webkit-appearance: none;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-accent { background: var(--accent); color: #fff; box-shadow: 0 6px 20px var(--glow); }
-  .btn-ghost  { background: var(--card2); color: var(--text2); border: 1.5px solid var(--border2); }
-  .btn-ghost:active { background: var(--card); }
-  .btn-green  { background: var(--green); color: #fff; box-shadow: 0 6px 20px rgba(34,197,94,0.3); }
-  .btn-red    { background: rgba(239,68,68,0.15); color: var(--red); border: 1.5px solid rgba(239,68,68,0.3); }
-  .btn-row    { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .btn-sm     { padding: 10px 16px; font-size: 13px; border-radius: 10px; }
-  .btn:disabled { opacity: 0.4; pointer-events: none; }
+/* GPS */
+.gpsbadge{display:flex;align-items:center;gap:8px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:10px;padding:9px 12px;margin-bottom:13px;font-size:13px;font-weight:600;color:var(--green)}
+.ldot{width:7px;height:7px;background:var(--green);border-radius:50%;flex-shrink:0;animation:ld 1.5s ease-in-out infinite}
+@keyframes ld{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
 
-  /* ── TYPE SELECTOR ── */
-  .type-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
-  .type-btn {
-    background: var(--card2);
-    border: 1.5px solid var(--border2);
-    border-radius: 14px;
-    padding: 14px 8px;
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    cursor: pointer; transition: all 0.15s;
-  }
-  .type-btn.selected { border-color: var(--accent); background: rgba(249,115,22,0.1); }
-  .type-btn-icon { font-size: 24px; }
-  .type-btn-label { font-size: 12px; font-weight: 600; color: var(--text2); }
-  .type-btn.selected .type-btn-label { color: var(--accent); }
+/* STEPS */
+.sbar{display:flex;gap:5px;margin-bottom:16px}
+.step{flex:1;height:4px;border-radius:2px;background:var(--b2)}
+.step.done{background:var(--ac)}
+.step.act{background:var(--ac);opacity:.5}
 
-  /* ── PHOTO CAPTURE ── */
-  .photo-zone {
-    background: var(--card2);
-    border: 2px dashed var(--border2);
-    border-radius: 16px;
-    padding: 28px 16px;
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-    cursor: pointer; transition: all 0.2s;
-    margin-bottom: 14px;
-    position: relative; overflow: hidden;
-    min-height: 130px;
-    justify-content: center;
-  }
-  .photo-zone:active { border-color: var(--accent); background: rgba(249,115,22,0.05); }
-  .photo-zone.has-photo { border-style: solid; border-color: var(--green); }
-  .photo-zone img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:14px; }
-  .photo-zone-overlay {
-    position: absolute; inset: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-    border-radius: 14px;
-  }
-  .photo-zone-icon { font-size: 32px; }
-  .photo-zone-text { font-size: 14px; font-weight: 600; color: var(--text2); }
-  .photo-zone-hint { font-size: 11px; color: var(--text3); }
-  .photo-badge {
-    position: absolute; top: 10px; right: 10px;
-    background: var(--green);
-    color: #fff;
-    border-radius: 20px;
-    padding: 3px 10px;
-    font-size: 11px; font-weight: 700;
-    z-index: 2;
-  }
+/* TYPE GRID */
+.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px}
+.tbtn{background:var(--card2);border:1.5px solid var(--b2);border-radius:12px;padding:12px 5px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;transition:all .15s}
+.tbtn.sel{border-color:var(--ac);background:rgba(249,115,22,.1)}
+.tbtn-ico{font-size:22px}
+.tbtn-lbl{font-size:11px;font-weight:600;color:var(--t2)}
+.tbtn.sel .tbtn-lbl{color:var(--ac)}
 
-  /* ── COUNTER CONTROL ── */
-  .counter-row {
-    display: flex; align-items: center; gap: 14px;
-    background: var(--card2);
-    border: 1.5px solid var(--border2);
-    border-radius: 16px;
-    padding: 12px 16px;
-    margin-bottom: 14px;
-  }
-  .counter-label { flex: 1; font-size: 15px; font-weight: 600; }
-  .counter-sub { font-size: 11px; color: var(--text2); font-weight: 400; }
-  .counter-btns { display: flex; align-items: center; gap: 12px; }
-  .counter-btn {
-    width: 38px; height: 38px;
-    border-radius: 10px;
-    border: 1.5px solid var(--border2);
-    background: var(--card);
-    color: var(--text);
-    font-size: 20px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s;
-    flex-shrink: 0;
-  }
-  .counter-btn:active { background: var(--accent); border-color: var(--accent); color: #fff; transform: scale(0.93); }
-  .counter-val { font-size: 22px; font-weight: 800; min-width: 36px; text-align: center; }
+/* MODAL */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.mbg.on{display:flex}
+.modal{background:var(--card);border-radius:22px 22px 0 0;border-top:1px solid var(--b2);padding:20px 16px calc(var(--sab) + 20px);width:100%;max-height:88vh;overflow-y:auto;animation:slideup .28s ease}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mhandle{width:34px;height:4px;background:var(--b2);border-radius:2px;margin:0 auto 16px}
+.mttl{font-size:18px;font-weight:800;margin-bottom:5px}
+.msub{font-size:13px;color:var(--t2);margin-bottom:16px}
+.mfield{margin-bottom:13px}
 
-  /* ── DIVIDER ── */
-  .divider { height: 1px; background: var(--border); margin: 18px 0; }
-  .section-title {
-    font-size: 12px; font-weight: 700; color: var(--text3);
-    letter-spacing: 1px; text-transform: uppercase;
-    margin-bottom: 14px; margin-top: 6px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+/* TOAST */
+#toast{position:fixed;left:13px;right:13px;bottom:calc(56px + var(--sab) + 10px);background:var(--card);border:1px solid var(--b2);border-radius:13px;padding:12px 14px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;z-index:300;box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none}
+#toast.on{opacity:1;transform:translateY(0)}
+#toast.success{border-color:rgba(34,197,94,.4)}
+#toast.error{border-color:rgba(239,68,68,.4)}
+#toast.nonav{bottom:calc(var(--sab) + 18px)}
 
-  /* ── EXPENSE ITEM ── */
-  .expense-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    margin-bottom: 10px;
-  }
-  .expense-icon { width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
-  .expense-info { flex: 1; min-width: 0; }
-  .expense-type { font-size: 14px; font-weight: 700; }
-  .expense-time { font-size: 11px; color: var(--text3); margin-top: 2px; }
-  .expense-amount { font-size: 18px; font-weight: 800; color: var(--yellow); }
+/* PILL */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.pill-o{background:rgba(249,115,22,.15);color:var(--ac)}
+.pill-g{background:rgba(34,197,94,.15);color:var(--green)}
 
-  /* ── SUMMARY ROWS ── */
-  .summary-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 13px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .summary-row:last-child { border-bottom: none; }
-  .summary-key { font-size: 13px; color: var(--text2); }
-  .summary-val { font-size: 14px; font-weight: 700; }
+/* ADMIN TABS */
+.atab{display:none}
+.atab.on{display:block}
 
-  /* ── CHECKLIST ── */
-  .check-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .check-item:last-child { border-bottom: none; }
-  .check-box {
-    width: 24px; height: 24px;
-    border-radius: 7px;
-    border: 2px solid var(--border2);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; transition: all 0.15s;
-  }
-  .check-box.done { background: var(--green); border-color: var(--green); }
-  .check-label { font-size: 14px; }
-  .check-label.done { color: var(--text2); text-decoration: line-through; }
+/* IINFO */
+.iinfo{background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);border-radius:11px;padding:11px 12px;margin-bottom:13px;font-size:12px;color:var(--t2);line-height:1.6}
 
-  /* ── TIMELINE ── */
-  .timeline { padding-left: 18px; border-left: 2px solid var(--border); }
-  .tl-item { position: relative; padding: 0 0 18px 18px; }
-  .tl-item::before {
-    content: '';
-    position: absolute; left: -7px; top: 4px;
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    background: var(--accent);
-    border: 2px solid var(--bg);
-  }
-  .tl-time { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
-  .tl-text { font-size: 13px; color: var(--text2); }
-  .tl-text strong { color: var(--text); }
-
-  /* ── TOAST ── */
-  #toast {
-    position: fixed; bottom: calc(var(--nav-h) + var(--safe-bot) + 16px); left: 16px; right: 16px;
-    background: var(--card);
-    border: 1px solid var(--border2);
-    border-radius: 14px;
-    padding: 14px 16px;
-    display: flex; align-items: center; gap: 12px;
-    font-size: 14px; font-weight: 500;
-    z-index: 999;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    transform: translateY(20px); opacity: 0;
-    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
-  }
-  #toast.show { transform: translateY(0); opacity: 1; }
-  #toast.success { border-color: rgba(34,197,94,0.4); }
-  #toast.error   { border-color: rgba(239,68,68,0.4); }
-  .toast-icon { font-size: 18px; }
-
-  /* ── MODAL ── */
-  .modal-bg {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(4px);
-    z-index: 200;
-    display: none; align-items: flex-end; justify-content: center;
-  }
-  .modal-bg.open { display: flex; }
-  .modal {
-    background: var(--card);
-    border-radius: 24px 24px 0 0;
-    border-top: 1px solid var(--border2);
-    padding: 24px 20px;
-    padding-bottom: calc(var(--safe-bot) + 24px);
-    width: 100%; max-height: 85vh;
-    overflow-y: auto;
-    animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
-  }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 20px; }
-  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
-  .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
-
-  /* ── PULSE ANIMATION ── */
-  @keyframes pulse-ring { 0%{transform:scale(1);opacity:0.6} 100%{transform:scale(1.8);opacity:0} }
-  @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
-  .spin { animation: spin 1s linear infinite; }
-
-  /* ── LIVE DOT ── */
-  .live-dot { display:inline-block;width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulseLive 1.5s ease-in-out infinite; }
-  @keyframes pulseLive { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
-
-  /* ── PROGRESS STEPS ── */
-  .steps-bar { display:flex; gap:6px; margin-bottom:20px; }
-  .step { flex:1; height:4px; border-radius:2px; background:var(--border2); transition:background 0.3s; }
-  .step.done { background: var(--accent); }
-  .step.active { background: var(--accent); opacity: 0.5; }
-
-  /* ── GPS BADGE ── */
-  .gps-badge {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(34,197,94,0.1);
-    border: 1px solid rgba(34,197,94,0.25);
-    border-radius: 12px;
-    padding: 10px 14px;
-    margin-bottom: 14px;
-    font-size: 13px; font-weight: 600; color: var(--green);
-  }
-
-  /* ── HIDDEN FILE INPUT ── */
-  #photoInput { position:absolute; opacity:0; pointer-events:none; width:1px; height:1px; }
-
-  /* ── SCROLLBAR ── */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--card2); border-radius: 4px; }
-
-  /* ── ANIMATIONS ── */
-  @keyframes fadeSlideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-  .animate-in { animation: fadeSlideIn 0.4s ease forwards; }
-  .delay-1 { animation-delay: 0.05s; opacity:0; }
-  .delay-2 { animation-delay: 0.10s; opacity:0; }
-  .delay-3 { animation-delay: 0.15s; opacity:0; }
-  .delay-4 { animation-delay: 0.20s; opacity:0; }
-  .delay-5 { animation-delay: 0.25s; opacity:0; }
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--card2);border-radius:3px}
+#photoInput{position:fixed;opacity:0;pointer-events:none;width:1px;height:1px;top:-200px}
 </style>
 </head>
 <body>
-
 <input type="file" id="photoInput" accept="image/*" capture="environment">
-
-<!-- ══════════════════════════════════════
-     LOGIN
-══════════════════════════════════════ -->
 <div id="app">
-<div id="loginScreen" class="screen active" style="position:relative;overflow:hidden">
-  <div class="login-blob login-blob-1"></div>
-  <div class="login-blob login-blob-2"></div>
 
-  <div class="login-logo">
-    <div class="login-logo-icon">🚚</div>
-    <div class="login-logo-text">Car<span>Logistique</span></div>
+<!-- LOGIN -->
+<div id="scLogin" class="screen on">
+  <div class="logo"><div class="logo-ico">🚚</div><div class="logo-txt">Car<span>Logistique</span></div></div>
+  <p class="login-sub">Connectez-vous pour accéder à votre espace</p>
+  <div class="login-card">
+    <label class="flbl" for="loginEmail">Adresse email</label>
+    <input class="finp" type="email" id="loginEmail" placeholder="votre@email.com" autocomplete="email" autocapitalize="none" inputmode="email">
+    <label class="flbl" for="loginPass">Mot de passe</label>
+    <input class="finp" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    <button class="login-btn" id="loginBtn">Se connecter</button>
+    <div class="login-err" id="loginErr">Email ou mot de passe incorrect</div>
   </div>
-  <div class="login-tagline">Application livreur — Connectez-vous pour commencer</div>
-
-  <div class="login-form">
-    <div class="field-group">
-      <label class="field-label">Email</label>
-      <input class="field-input" type="email" id="loginEmail" placeholder="votre@email.com" autocomplete="email">
-    </div>
-    <div class="field-group">
-      <label class="field-label">Mot de passe</label>
-      <input class="field-input" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
-    </div>
-    <button class="btn-main" id="loginBtn" onclick="doLogin()">Se connecter</button>
-    <div class="login-error" id="loginError">
-      <i class="fas fa-exclamation-circle"></i> Email ou mot de passe incorrect
-    </div>
-  </div>
-
-  <div style="position:absolute;bottom:calc(var(--safe-bot)+20px);font-size:11px;color:var(--text3);text-align:center">
-    Car Logistique © 2026 — Application livreur v1.0
-  </div>
+  <p class="login-footer">Car Logistique © 2026 — v2.0</p>
 </div>
 
-<!-- ══════════════════════════════════════
-     ÉCRAN ACCUEIL
-══════════════════════════════════════ -->
-<div id="homeScreen" class="screen">
+<!-- HOME -->
+<div id="scHome" class="screen">
   <div class="topbar">
-    <div style="width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0" id="homeAvatar">AK</div>
-    <div style="flex:1">
-      <div class="topbar-title" id="homeDriverName">Ahmed Khalil</div>
-      <span class="topbar-sub" id="homeDate">Chargement...</span>
-    </div>
-    <div class="topbar-btn" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></div>
+    <div id="homeAvatar" style="width:34px;height:34px;background:var(--ac);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0">?</div>
+    <div style="flex:1"><div class="tbtitle" id="homeName">Livreur</div><span class="tbsub" id="homeDate"></span></div>
+    <div class="tbbtn" id="btnLogout"><i class="fas fa-sign-out-alt"></i></div>
   </div>
-
-  <div class="scroll-area pad" id="homeContent">
-    <!-- GPS badge -->
-    <div class="gps-badge animate-in delay-1" id="gpsBadge">
-      <span class="live-dot"></span>
-      <span id="gpsText">GPS actif — Position envoyée</span>
-    </div>
-
-    <!-- Start day button -->
-    <div id="startDaySection" class="animate-in delay-2">
-      <button class="action-card" onclick="goToStartDay()">
-        <div class="action-card-icon">🚀</div>
-        <div class="action-card-text">
-          <div class="action-card-title">Commencer la journée</div>
-          <div class="action-card-sub">Enregistrer le kilométrage de départ</div>
-        </div>
+  <div class="content">
+    <div class="gpsbadge"><span class="ldot"></span><span id="gpsText">GPS actif</span></div>
+    <div id="divStart">
+      <button class="acard" id="btnStartDay">
+        <div class="acard-ico">🚀</div>
+        <div><div class="acard-ttl">Commencer la journée</div><div class="acard-sub">Enregistrer le kilométrage de départ</div></div>
       </button>
     </div>
-
-    <!-- End day button (hidden by default) -->
-    <div id="endDaySection" style="display:none" class="animate-in">
-      <button class="action-card" style="background:linear-gradient(135deg,#dc2626,#b91c1c)" onclick="goToEndDay()">
-        <div class="action-card-icon">🏁</div>
-        <div class="action-card-text">
-          <div class="action-card-title">Terminer la journée</div>
-          <div class="action-card-sub">Photos + kilométrage de fin obligatoires</div>
-        </div>
+    <div id="divEnd" style="display:none">
+      <button class="acard" id="btnEndDay" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">
+        <div class="acard-ico">🏁</div>
+        <div><div class="acard-ttl">Terminer la journée</div><div class="acard-sub">Photos + kilométrage de fin obligatoires</div></div>
       </button>
     </div>
-
-    <!-- Today stats -->
     <div id="homeStats" style="display:none">
-      <div class="section-title animate-in delay-2">Journée en cours</div>
-      <div class="stats-row animate-in delay-3">
-        <div class="stat-box">
-          <div class="stat-box-label">Km départ</div>
-          <div class="stat-box-val" id="statKmStart" style="color:var(--accent)">—</div>
-          <div class="stat-box-unit">kilomètres</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">Dépenses</div>
-          <div class="stat-box-val" id="statExpenses" style="color:var(--yellow)">0</div>
-          <div class="stat-box-unit">euros</div>
-        </div>
+      <div class="sec">Journée en cours</div>
+      <div class="srow">
+        <div class="sbox"><div class="sbox-lbl">Km départ</div><div class="sbox-val" id="stKm" style="color:var(--ac)">—</div><div class="sbox-unit">km</div></div>
+        <div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" id="stExp" style="color:var(--yellow)">0</div><div class="sbox-unit">euros</div></div>
       </div>
-      <div class="stats-row animate-in delay-4">
-        <div class="stat-box">
-          <div class="stat-box-label">Colis livrés</div>
-          <div class="stat-box-val" id="statDelivered" style="color:var(--blue)">0</div>
-          <div class="stat-box-unit">colis</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">Colis ramassés</div>
-          <div class="stat-box-val" id="statPickup" style="color:var(--green)">0</div>
-          <div class="stat-box-unit">colis</div>
-        </div>
+      <div class="srow">
+        <div class="sbox"><div class="sbox-lbl">Colis livrés</div><div class="sbox-val" id="stDel" style="color:var(--blue)">0</div><div class="sbox-unit">colis</div></div>
+        <div class="sbox"><div class="sbox-lbl">Colis ramassés</div><div class="sbox-val" id="stPick" style="color:var(--green)">0</div><div class="sbox-unit">colis</div></div>
       </div>
     </div>
-
-    <!-- Activity -->
-    <div class="animate-in delay-5">
-      <div class="section-title">Activité récente</div>
-      <div class="timeline" id="homeTimeline">
-        <div class="tl-item">
-          <div class="tl-time">Aujourd'hui</div>
-          <div class="tl-text">Connecté à l'application</div>
-        </div>
-      </div>
-    </div>
+    <div class="sec">Activité récente</div>
+    <div class="card"><div class="tl" id="homeTL"><div class="tli"><div class="tlt">Aujourd'hui</div><div class="tltx">Connecté à l'application</div></div></div></div>
   </div>
+  <nav class="bnav" id="driverNav">
+    <div class="nb on" data-tab="home"><div class="nbico"><i class="fas fa-home"></i></div><span class="nblbl">Accueil</span></div>
+    <div class="nb" data-tab="delivery"><div class="nbico"><i class="fas fa-boxes"></i></div><span class="nblbl">Livraison</span></div>
+    <div class="nb" data-tab="expenses"><div class="nbico"><i class="fas fa-receipt"></i></div><span class="nblbl">Dépenses</span></div>
+  </nav>
 </div>
 
-<!-- ══════════════════════════════════════
-     DÉBUT DE JOURNÉE
-══════════════════════════════════════ -->
-<div id="startDayScreen" class="screen">
+<!-- START DAY -->
+<div id="scStartDay" class="screen">
   <div class="topbar">
-    <div class="topbar-btn" onclick="showScreen('home')"><i class="fas fa-arrow-left"></i></div>
-    <div style="flex:1">
-      <div class="topbar-title">Début de journée</div>
-      <span class="topbar-sub" id="startDayDate"></span>
-    </div>
-    <div style="padding:5px 10px;background:rgba(249,115,22,0.15);border-radius:8px;font-size:11px;font-weight:700;color:var(--accent)">ÉTAPE 1/2</div>
+    <div class="tbbtn" id="btnBackFromStart"><i class="fas fa-arrow-left"></i></div>
+    <div style="flex:1"><div class="tbtitle">Début de journée</div><span class="tbsub" id="startDate"></span></div>
+    <div class="tbbadge">ÉTAPE 1</div>
   </div>
-
-  <div class="scroll-area pad no-nav">
-    <div class="steps-bar">
-      <div class="step done"></div>
-      <div class="step active"></div>
+  <div class="content nonav">
+    <div class="sbar"><div class="step done"></div><div class="step act"></div></div>
+    <div class="card" style="border-color:rgba(249,115,22,.3);background:rgba(249,115,22,.05);margin-bottom:14px">
+      <div style="display:flex;gap:12px;align-items:center"><div style="font-size:24px">📋</div><div><div style="font-size:14px;font-weight:700;margin-bottom:2px">Avant de commencer</div><div style="font-size:12px;color:var(--t2)">Notez le kilométrage affiché sur votre tableau de bord</div></div></div>
     </div>
-
-    <div class="card animate-in" style="border-color:rgba(249,115,22,0.3);background:rgba(249,115,22,0.05)">
-      <div style="display:flex;gap:12px;align-items:center">
-        <div style="font-size:28px">📋</div>
-        <div>
-          <div style="font-size:15px;font-weight:700;margin-bottom:3px">Avant de commencer</div>
-          <div style="font-size:12px;color:var(--text2)">Notez le kilométrage affiché sur votre tableau de bord</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section-title">Kilométrage de départ</div>
-    <div class="input-row">
-      <input class="input-box big" type="number" id="kmStartInput" placeholder="48 250" inputmode="numeric" pattern="[0-9]*">
-    </div>
-    <div style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:20px">
-      <i class="fas fa-info-circle"></i> Entrez le nombre exact affiché sur votre compteur
-    </div>
-
-    <button class="btn btn-accent" id="confirmStartBtn" onclick="confirmStartDay()">
-      <i class="fas fa-rocket"></i> Démarrer ma journée
-    </button>
+    <div class="sec">Kilométrage de départ</div>
+    <input class="ibox big" type="number" id="kmStartInput" placeholder="48 250" inputmode="numeric">
+    <p style="font-size:12px;color:var(--t3);text-align:center;margin:-8px 0 18px"><i class="fas fa-info-circle"></i> Entrez le nombre exact affiché sur votre compteur</p>
+    <button class="btn btn-ac" id="btnConfirmStart"><i class="fas fa-rocket"></i> Démarrer ma journée</button>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     DÉPENSES
-══════════════════════════════════════ -->
-<div id="expensesScreen" class="screen">
+<!-- DELIVERY -->
+<div id="scDelivery" class="screen">
   <div class="topbar">
-    <div style="flex:1">
-      <div class="topbar-title">Dépenses</div>
-      <span class="topbar-sub" id="expensesTotal">Total : 0€</span>
-    </div>
-    <button class="topbar-btn" onclick="openAddExpense()" style="background:var(--accent);border-color:var(--accent);color:#fff;width:auto;padding:0 14px;border-radius:10px;font-size:13px;font-weight:700;gap:6px"><i class="fas fa-plus"></i> Ajouter</button>
+    <div style="flex:1"><div class="tbtitle">Livraison & Ramassage</div><span class="tbsub">Appui long sur +/− pour aller vite</span></div>
+    <button class="btn btn-ac btn-sm" id="btnSaveDelivery"><i class="fas fa-check"></i> Sauvegarder</button>
   </div>
-
-  <div class="scroll-area pad">
-    <div id="expensesList">
-      <div style="text-align:center;padding:60px 20px;color:var(--text3)">
-        <div style="font-size:40px;margin-bottom:12px">🧾</div>
-        <div style="font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px">Aucune dépense</div>
-        <div style="font-size:13px">Appuyez sur + Ajouter pour enregistrer une dépense</div>
+  <div class="content">
+    <div class="sec">📦 Livraison</div>
+    <div class="crow">
+      <div class="cinfo"><div class="clbl">Stops livrés</div><div class="csub">Nombre d'arrêts effectués</div></div>
+      <div class="cctrl">
+        <div class="cbtn" data-field="stopsDelivered" data-dir="-1">−</div>
+        <div class="cnum" id="cnt-stopsDelivered" contenteditable="true" data-field="stopsDelivered">0</div>
+        <div class="cbtn" data-field="stopsDelivered" data-dir="1">+</div>
       </div>
     </div>
+    <div class="crow">
+      <div class="cinfo"><div class="clbl">Colis livrés</div><div class="csub">Nombre total de colis</div></div>
+      <div class="cctrl">
+        <div class="cbtn" data-field="packagesDelivered" data-dir="-1">−</div>
+        <div class="cnum" id="cnt-packagesDelivered" contenteditable="true" data-field="packagesDelivered">0</div>
+        <div class="cbtn" data-field="packagesDelivered" data-dir="1">+</div>
+      </div>
+    </div>
+    <div class="mfield">
+      <label class="ilbl">Exceptions / Remarques</label>
+      <textarea class="ibox" id="exceptionsInput" placeholder="Ex: Client absent au stop 4..."></textarea>
+    </div>
+    <div class="sec">📥 Ramassage</div>
+    <div class="crow">
+      <div class="cinfo"><div class="clbl">Stops ramassés</div><div class="csub">Arrêts de ramassage</div></div>
+      <div class="cctrl">
+        <div class="cbtn" data-field="stopsPickup" data-dir="-1">−</div>
+        <div class="cnum" id="cnt-stopsPickup" contenteditable="true" data-field="stopsPickup">0</div>
+        <div class="cbtn" data-field="stopsPickup" data-dir="1">+</div>
+      </div>
+    </div>
+    <div class="crow">
+      <div class="cinfo"><div class="clbl">Colis ramassés</div><div class="csub">Nombre total ramassés</div></div>
+      <div class="cctrl">
+        <div class="cbtn" data-field="packagesPickup" data-dir="-1">−</div>
+        <div class="cnum" id="cnt-packagesPickup" contenteditable="true" data-field="packagesPickup">0</div>
+        <div class="cbtn" data-field="packagesPickup" data-dir="1">+</div>
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(249,115,22,.3)">
+      <div class="cardttl">Totaux en temps réel</div>
+      <div class="sumrow"><span class="sumkey">Total stops</span><span class="sumval" id="totStops" style="color:var(--blue)">0</span></div>
+      <div class="sumrow"><span class="sumkey">Total colis</span><span class="sumval" id="totColis" style="color:var(--ac)">0</span></div>
+    </div>
   </div>
+  <nav class="bnav">
+    <div class="nb" data-tab="home"><div class="nbico"><i class="fas fa-home"></i></div><span class="nblbl">Accueil</span></div>
+    <div class="nb on"><div class="nbico"><i class="fas fa-boxes"></i></div><span class="nblbl">Livraison</span></div>
+    <div class="nb" data-tab="expenses"><div class="nbico"><i class="fas fa-receipt"></i></div><span class="nblbl">Dépenses</span></div>
+  </nav>
 </div>
 
-<!-- ══════════════════════════════════════
-     LIVRAISON
-══════════════════════════════════════ -->
-<div id="deliveryScreen" class="screen">
+<!-- EXPENSES -->
+<div id="scExpenses" class="screen">
   <div class="topbar">
-    <div style="flex:1">
-      <div class="topbar-title">Livraison & Ramassage</div>
-      <span class="topbar-sub">Entrez les données du jour</span>
-    </div>
-    <button class="btn btn-accent btn-sm" style="width:auto;padding:8px 16px" onclick="saveDelivery()"><i class="fas fa-check"></i> Sauvegarder</button>
+    <div style="flex:1"><div class="tbtitle">Dépenses</div><span class="tbsub" id="expTotal">Total : 0 €</span></div>
+    <button class="btn btn-ac btn-sm" id="btnOpenAddExp"><i class="fas fa-plus"></i> Ajouter</button>
   </div>
-
-  <div class="scroll-area pad">
-    <div class="section-title animate-in delay-1">📦 Livraison</div>
-
-    <div class="counter-row animate-in delay-2">
-      <div>
-        <div class="counter-label">Stops livrés</div>
-        <div class="counter-sub">Nombre d'arrêts effectués</div>
-      </div>
-      <div class="counter-btns">
-        <div class="counter-btn" onclick="changeCounter('stopsDelivered',-1)">−</div>
-        <div class="counter-val" id="cnt-stopsDelivered">0</div>
-        <div class="counter-btn" onclick="changeCounter('stopsDelivered',1)">+</div>
-      </div>
-    </div>
-
-    <div class="counter-row animate-in delay-3">
-      <div>
-        <div class="counter-label">Colis livrés</div>
-        <div class="counter-sub">Nombre total de colis</div>
-      </div>
-      <div class="counter-btns">
-        <div class="counter-btn" onclick="changeCounter('packagesDelivered',-1)">−</div>
-        <div class="counter-val" id="cnt-packagesDelivered">0</div>
-        <div class="counter-btn" onclick="changeCounter('packagesDelivered',1)">+</div>
-      </div>
-    </div>
-
-    <div class="input-row animate-in delay-3">
-      <label class="input-label">Exceptions / Remarques</label>
-      <textarea class="input-box" id="exceptionsInput" placeholder="Ex: Client absent au stop 4, colis retourné..." style="min-height:80px;resize:none;font-size:14px;font-weight:400;line-height:1.5" oninput="day.exceptions=this.value"></textarea>
-    </div>
-
-    <div class="section-title animate-in delay-4">📥 Ramassage</div>
-
-    <div class="counter-row animate-in delay-4">
-      <div>
-        <div class="counter-label">Stops ramassés</div>
-        <div class="counter-sub">Nombre d'arrêts de ramassage</div>
-      </div>
-      <div class="counter-btns">
-        <div class="counter-btn" onclick="changeCounter('stopsPickup',-1)">−</div>
-        <div class="counter-val" id="cnt-stopsPickup">0</div>
-        <div class="counter-btn" onclick="changeCounter('stopsPickup',1)">+</div>
-      </div>
-    </div>
-
-    <div class="counter-row animate-in delay-5">
-      <div>
-        <div class="counter-label">Colis ramassés</div>
-        <div class="counter-sub">Nombre total de colis ramassés</div>
-      </div>
-      <div class="counter-btns">
-        <div class="counter-btn" onclick="changeCounter('packagesPickup',-1)">−</div>
-        <div class="counter-val" id="cnt-packagesPickup">0</div>
-        <div class="counter-btn" onclick="changeCounter('packagesPickup',1)">+</div>
-      </div>
-    </div>
-
-    <!-- Totaux live -->
-    <div class="card animate-in" style="border-color:rgba(249,115,22,0.3)" id="liveTotals">
-      <div class="card-title">Totaux en temps réel</div>
-      <div class="summary-row">
-        <span class="summary-key">Total stops</span>
-        <span class="summary-val" id="totalStopsLive" style="color:var(--blue)">0</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-key">Total colis</span>
-        <span class="summary-val" id="totalColisLive" style="color:var(--accent)">0</span>
-      </div>
-    </div>
+  <div class="content">
+    <div id="expList"><div style="text-align:center;padding:52px 20px;color:var(--t3)"><div style="font-size:36px;margin-bottom:10px">🧾</div><div style="font-size:15px;font-weight:700;color:var(--t2);margin-bottom:5px">Aucune dépense</div><div style="font-size:13px">Appuyez sur + Ajouter</div></div></div>
   </div>
+  <nav class="bnav">
+    <div class="nb" data-tab="home"><div class="nbico"><i class="fas fa-home"></i></div><span class="nblbl">Accueil</span></div>
+    <div class="nb" data-tab="delivery"><div class="nbico"><i class="fas fa-boxes"></i></div><span class="nblbl">Livraison</span></div>
+    <div class="nb on"><div class="nbico"><i class="fas fa-receipt"></i></div><span class="nblbl">Dépenses</span></div>
+  </nav>
 </div>
 
-<!-- ══════════════════════════════════════
-     FIN DE JOURNÉE
-══════════════════════════════════════ -->
-<div id="endDayScreen" class="screen">
+<!-- END DAY -->
+<div id="scEndDay" class="screen">
   <div class="topbar">
-    <div class="topbar-btn" onclick="showScreen('home')"><i class="fas fa-arrow-left"></i></div>
-    <div style="flex:1">
-      <div class="topbar-title">Fin de journée</div>
-      <span class="topbar-sub">Complétez toutes les étapes</span>
-    </div>
+    <div class="tbbtn" id="btnBackFromEnd"><i class="fas fa-arrow-left"></i></div>
+    <div style="flex:1"><div class="tbtitle">Fin de journée</div><span class="tbsub">Complétez toutes les étapes</span></div>
   </div>
-
-  <div class="scroll-area pad no-nav">
-    <!-- Checklist -->
-    <div class="card animate-in delay-1" id="endChecklist">
-      <div class="card-title">Étapes obligatoires</div>
-      <div class="check-item">
-        <div class="check-box" id="chk-km"><i class="fas fa-check" style="font-size:11px;color:#fff;display:none"></i></div>
-        <span class="check-label" id="chk-km-label">Kilométrage de fin</span>
-      </div>
-      <div class="check-item">
-        <div class="check-box" id="chk-scan"><i class="fas fa-check" style="font-size:11px;color:#fff;display:none"></i></div>
-        <span class="check-label" id="chk-scan-label">Photo rapport scanner</span>
-      </div>
-      <div class="check-item">
-        <div class="check-box" id="chk-odo"><i class="fas fa-check" style="font-size:11px;color:#fff;display:none"></i></div>
-        <span class="check-label" id="chk-odo-label">Photo kilométrage</span>
-      </div>
+  <div class="content nonav">
+    <div class="card">
+      <div class="cardttl">Étapes obligatoires</div>
+      <div class="chkrow"><div class="chkbox" id="chk-km"><i class="fas fa-check chkico"></i></div><span class="chklbl" id="chk-km-l">Kilométrage de fin <span style="color:var(--red)">*</span></span></div>
+      <div class="chkrow"><div class="chkbox" id="chk-scan"><i class="fas fa-check chkico"></i></div><span class="chklbl" id="chk-scan-l">Photo rapport scanner <span style="color:var(--t3);font-size:11px">(recommandé)</span></span></div>
+      <div class="chkrow"><div class="chkbox" id="chk-odo"><i class="fas fa-check chkico"></i></div><span class="chklbl" id="chk-odo-l">Photo kilométrage <span style="color:var(--t3);font-size:11px">(recommandé)</span></span></div>
     </div>
-
-    <!-- Résumé journée -->
-    <div class="section-title animate-in delay-2">Résumé de la journée</div>
-    <div class="card animate-in delay-2">
-      <div class="summary-row">
-        <span class="summary-key">Km de départ</span>
-        <span class="summary-val" id="endKmStart">—</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-key">Colis livrés</span>
-        <span class="summary-val" id="endColis" style="color:var(--blue)">0</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-key">Colis ramassés</span>
-        <span class="summary-val" id="endRamassage" style="color:var(--green)">0</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-key">Dépenses totales</span>
-        <span class="summary-val" id="endExpenses" style="color:var(--yellow)">0€</span>
-      </div>
+    <div class="sec">Résumé de la journée</div>
+    <div class="card">
+      <div class="sumrow"><span class="sumkey">Km de départ</span><span class="sumval" id="endKmStart">—</span></div>
+      <div class="sumrow"><span class="sumkey">Colis livrés</span><span class="sumval" id="endColis" style="color:var(--blue)">0</span></div>
+      <div class="sumrow"><span class="sumkey">Colis ramassés</span><span class="sumval" id="endRamassage" style="color:var(--green)">0</span></div>
+      <div class="sumrow"><span class="sumkey">Dépenses totales</span><span class="sumval" id="endExp" style="color:var(--yellow)">0 €</span></div>
     </div>
-
-    <!-- Km fin -->
-    <div class="section-title animate-in delay-3">🔢 Kilométrage de fin</div>
-    <div class="input-row animate-in delay-3">
-      <input class="input-box big" type="number" id="kmEndInput" placeholder="48 490" inputmode="numeric" pattern="[0-9]*" oninput="updateKmEnd()">
+    <div class="sec">🔢 Kilométrage de fin</div>
+    <input class="ibox big" type="number" id="kmEndInput" placeholder="48 490" inputmode="numeric">
+    <div class="card" id="kmTotalCard" style="display:none;border-color:rgba(249,115,22,.3);background:rgba(249,115,22,.05);margin-bottom:13px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:14px;color:var(--t2)">📏 Km parcourus</span><span style="font-size:22px;font-weight:800;color:var(--ac)" id="kmTotalDisplay">0 km</span></div>
     </div>
-    <div class="card animate-in delay-3" id="kmTotalCard" style="display:none;border-color:rgba(249,115,22,0.3);background:rgba(249,115,22,0.05)">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:14px;color:var(--text2)">📏 Km parcourus aujourd'hui</span>
-        <span style="font-size:26px;font-weight:800;color:var(--accent)" id="kmTotalDisplay">0 km</span>
-      </div>
-    </div>
-
-    <!-- Photo scanner -->
-    <div class="section-title animate-in delay-3">📄 Photo rapport scanner</div>
-    <div class="photo-zone animate-in delay-3" id="photoScan" onclick="takePhoto('scan')">
-      <div class="photo-zone-icon">📄</div>
-      <div class="photo-zone-text">Prendre une photo du rapport</div>
-      <div class="photo-zone-hint">Généré par le scanner de livraison</div>
-    </div>
-
-    <!-- Photo kilométrage -->
-    <div class="section-title animate-in delay-4">🚗 Photo du kilométrage</div>
-    <div class="photo-zone animate-in delay-4" id="photoOdo" onclick="takePhoto('odo')">
-      <div class="photo-zone-icon">🚗</div>
-      <div class="photo-zone-text">Photographier le compteur</div>
-      <div class="photo-zone-hint">Compteur kilométrique du véhicule</div>
-    </div>
-
-    <!-- Bouton terminer -->
-    <button class="btn btn-red" id="finishDayBtn" onclick="confirmEndDay()" style="margin-top:8px;margin-bottom:20px" disabled>
-      <i class="fas fa-flag-checkered"></i> Terminer et envoyer la journée
-    </button>
+    <div class="sec">📄 Photo rapport scanner</div>
+    <div class="pzone" id="pzoneScan"><div style="font-size:28px">📄</div><div style="font-size:13px;font-weight:600;color:var(--t2)">Prendre une photo du rapport</div><div style="font-size:11px;color:var(--t3)">Rapport généré par le scanner</div></div>
+    <div class="sec">🚗 Photo du kilométrage</div>
+    <div class="pzone" id="pzoneOdo"><div style="font-size:28px">🚗</div><div style="font-size:13px;font-weight:600;color:var(--t2)">Photographier le compteur</div><div style="font-size:11px;color:var(--t3)">Compteur kilométrique du véhicule</div></div>
+    <button class="btn btn-red" id="btnFinish" disabled style="margin-bottom:24px"><i class="fas fa-flag-checkered"></i> Terminer et envoyer la journée</button>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     NAVIGATION BAS
-══════════════════════════════════════ -->
-<nav class="bottom-nav" id="bottomNav">
-  <div class="nav-btn active" id="nav-home" onclick="navTo('home')">
-    <div class="nav-btn-icon"><i class="fas fa-home"></i></div>
-    <span class="nav-btn-label">Accueil</span>
+<!-- ADMIN -->
+<div id="scAdmin" class="screen">
+  <div class="topbar">
+    <div style="width:34px;height:34px;background:var(--ac);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0">CL</div>
+    <div style="flex:1"><div class="tbtitle" id="adminTitle">Tableau de bord</div><span class="tbsub">Car Logistique — Admin</span></div>
+    <div class="tbbtn" id="btnAdminLogout"><i class="fas fa-sign-out-alt"></i></div>
   </div>
-  <div class="nav-btn" id="nav-delivery" onclick="navTo('delivery')">
-    <div class="nav-btn-icon"><i class="fas fa-boxes"></i></div>
-    <span class="nav-btn-label">Livraison</span>
-  </div>
-  <div class="nav-btn" id="nav-expenses" onclick="navTo('expenses')">
-    <div class="nav-btn-icon"><i class="fas fa-receipt"></i></div>
-    <span class="nav-btn-label">Dépenses</span>
-  </div>
-</nav>
+  <div class="content">
+    <div id="atab-dash" class="atab on">
+      <div class="sec" style="margin-top:0">Vue d'ensemble</div>
+      <div class="srow" id="adminStats"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px">
+        <div class="sec" style="margin:0;flex:1">Livreurs du jour</div>
+        <button class="btn btn-ghost btn-sm" id="btnRefreshDash" style="width:auto;padding:7px 12px;font-size:11px"><i class="fas fa-sync-alt"></i> Actualiser</button>
+      </div>
+      <div id="adminDriversDay"></div>
+    </div>
 
-<!-- ══════════════════════════════════════
-     MODAL : AJOUTER DÉPENSE
-══════════════════════════════════════ -->
-<div class="modal-bg" id="addExpenseModal">
+    <div id="atab-gps" class="atab">
+      <div class="sec" style="margin-top:0">
+        <span class="ldot" style="flex-shrink:0"></span> Suivi GPS en direct
+      </div>
+      <div id="gpsDriverList"></div>
+      <div class="iinfo" style="margin-top:8px">
+        📍 Les positions se mettent à jour automatiquement quand les livreurs bougent.<br>
+        ⏱ Intervalle : toutes les 30 secondes.
+      </div>
+    </div>
+    <div id="atab-drivers" class="atab">
+      <button class="btn btn-ac" id="btnCreateDriver" style="margin-bottom:14px"><i class="fas fa-user-plus"></i> Créer un nouveau livreur</button>
+      <div class="sec">Comptes livreurs</div>
+      <div id="adminDriversList"></div>
+    </div>
+    <div id="atab-reports" class="atab">
+      <div class="sec" style="margin-top:0">Exporter les rapports</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <button class="btn btn-ac" id="btnExportCSV" style="flex-direction:column;gap:4px;padding:16px 10px">
+          <i class="fas fa-file-csv" style="font-size:22px"></i>
+          <span style="font-size:13px;font-weight:700">CSV</span>
+          <span style="font-size:10px;opacity:.8">Excel, Numbers</span>
+        </button>
+        <button class="btn" id="btnExportXLSX" style="flex-direction:column;gap:4px;padding:16px 10px;background:#1d6f42;color:#fff;box-shadow:0 4px 16px rgba(29,111,66,.35)">
+          <i class="fas fa-file-excel" style="font-size:22px"></i>
+          <span style="font-size:13px;font-weight:700">XLSX</span>
+          <span style="font-size:10px;opacity:.8">Tableau coloré</span>
+        </button>
+      </div>
+      <div class="iinfo" id="exportInfo">💡 Sélectionnez un format pour télécharger le rapport complet : résumé global + détail par livreur + totaux.</div>
+      <div class="sec">Rapports journaliers</div>
+      <div id="adminReportsList"></div>
+    </div>
+    <div id="atab-profile" class="atab">
+      <div style="text-align:center;padding:16px 0">
+        <div style="width:66px;height:66px;background:var(--ac);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;margin:0 auto 10px">CL</div>
+        <div style="font-size:18px;font-weight:800">Car Logistique</div>
+        <div style="font-size:12px;color:var(--t2);margin-top:3px"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="44072536282b232d37302d353121042329252d286a272b29">[email&#160;protected]</a></div>
+        <div style="margin-top:8px"><span class="pill pill-o">🛡️ Super Admin</span></div>
+      </div>
+      <div class="card">
+        <div class="cardttl">Compte</div>
+        <div class="sumrow"><span class="sumkey">Nom</span><span class="sumval">Car Logistique</span></div>
+        <div class="sumrow"><span class="sumkey">Email</span><span class="sumval" style="font-size:12px"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7e3d1f0c121119170d0a170f0b1b3e19131f1712501d1113">[email&#160;protected]</a></span></div>
+        <div class="sumrow"><span class="sumkey">Livreurs créés</span><span class="sumval" id="profileCount">—</span></div>
+      </div>
+      <button class="btn btn-red" id="btnProfileLogout" style="margin-top:6px"><i class="fas fa-sign-out-alt"></i> Se déconnecter</button>
+    </div>
+  </div>
+  <nav class="bnav" id="adminNav">
+    <div class="nb on" data-atab="dash"><div class="nbico"><i class="fas fa-chart-pie"></i></div><span class="nblbl">Dashboard</span></div>
+    <div class="nb" data-atab="gps"><div class="nbico"><i class="fas fa-map-marked-alt"></i></div><span class="nblbl">GPS Live</span></div>
+    <div class="nb" data-atab="drivers"><div class="nbico"><i class="fas fa-users"></i></div><span class="nblbl">Livreurs</span></div>
+    <div class="nb" data-atab="reports"><div class="nbico"><i class="fas fa-clipboard-list"></i></div><span class="nblbl">Rapports</span></div>
+    <div class="nb" data-atab="profile"><div class="nbico"><i class="fas fa-user-shield"></i></div><span class="nblbl">Profil</span></div>
+  </nav>
+</div>
+
+<!-- MODALS -->
+<div class="mbg" id="mAddExp">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Nouvelle dépense</div>
-    <div class="modal-sub">Remplissez les informations et prenez une photo du reçu</div>
-
-    <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px">TYPE DE DÉPENSE</div>
-    <div class="type-grid" id="expenseTypeGrid">
-      <div class="type-btn selected" data-type="Essence" onclick="selectExpenseType(this)">
-        <div class="type-btn-icon">⛽</div>
-        <div class="type-btn-label">Essence</div>
-      </div>
-      <div class="type-btn" data-type="Péage" onclick="selectExpenseType(this)">
-        <div class="type-btn-icon">🛣️</div>
-        <div class="type-btn-label">Péage</div>
-      </div>
-      <div class="type-btn" data-type="Autre" onclick="selectExpenseType(this)">
-        <div class="type-btn-icon">📌</div>
-        <div class="type-btn-label">Autre</div>
-      </div>
+    <div class="mhandle"></div>
+    <div class="mttl">Nouvelle dépense</div>
+    <div class="msub">Remplissez les informations et photographiez le reçu</div>
+    <div style="font-size:11px;font-weight:700;color:var(--t2);letter-spacing:.8px;text-transform:uppercase;margin-bottom:9px">TYPE</div>
+    <div class="tgrid" id="expTypeGrid">
+      <div class="tbtn sel" data-type="Essence"><div class="tbtn-ico">⛽</div><div class="tbtn-lbl">Essence</div></div>
+      <div class="tbtn" data-type="Péage"><div class="tbtn-ico">🛣️</div><div class="tbtn-lbl">Péage</div></div>
+      <div class="tbtn" data-type="Autre"><div class="tbtn-ico">📌</div><div class="tbtn-lbl">Autre</div></div>
     </div>
-
-    <div class="input-row">
-      <label class="input-label">Montant (€)</label>
-      <input class="input-box" type="number" id="expenseAmount" placeholder="0.00" inputmode="decimal" step="0.01">
-    </div>
-
-    <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px">
-      PHOTO DU REÇU <span style="color:var(--red)">*</span>
-    </div>
-    <div class="photo-zone" id="expensePhotoZone" onclick="takeExpensePhoto()">
-      <div class="photo-zone-icon">📷</div>
-      <div class="photo-zone-text">Photographier le reçu</div>
-      <div class="photo-zone-hint">Photo obligatoire · Compressée automatiquement</div>
-    </div>
-
-    <div class="btn-row" style="margin-top:6px">
-      <button class="btn btn-ghost" onclick="closeModal('addExpenseModal')">Annuler</button>
-      <button class="btn btn-accent" onclick="confirmAddExpense()" id="addExpenseConfirmBtn">
-        <i class="fas fa-plus"></i> Ajouter
-      </button>
+    <div class="mfield"><label class="ilbl">Montant (€)</label><input class="ibox" type="number" id="expAmount" placeholder="0.00" inputmode="decimal" step="0.01"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--t2);letter-spacing:.8px;text-transform:uppercase;margin-bottom:9px">PHOTO DU REÇU <span style="color:var(--red)">*</span></div>
+    <div class="pzone" id="pzoneExp"><div style="font-size:26px">📷</div><div style="font-size:13px;font-weight:600;color:var(--t2)">Photographier le reçu</div><div style="font-size:11px;color:var(--t3)">Obligatoire · Compressée automatiquement</div></div>
+    <div class="btn2col">
+      <button class="btn btn-ghost" id="btnCancelExp">Annuler</button>
+      <button class="btn btn-ac" id="btnConfirmExp"><i class="fas fa-plus"></i> Ajouter</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     MODAL : CONFIRMATION FIN DE JOURNÉE
-══════════════════════════════════════ -->
-<div class="modal-bg" id="confirmEndModal">
+<div class="mbg" id="mConfirmEnd">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <div style="text-align:center;margin-bottom:16px">
-      <div style="font-size:52px;margin-bottom:8px">🏁</div>
-      <div class="modal-title">Terminer la journée ?</div>
-      <div class="modal-sub">Cette action est irréversible. Toutes les données seront envoyées à l'administrateur.</div>
+    <div class="mhandle"></div>
+    <div style="text-align:center;margin-bottom:14px"><div style="font-size:46px;margin-bottom:8px">🏁</div><div class="mttl">Terminer la journée ?</div><div style="font-size:13px;color:var(--t2)">Toutes les données seront envoyées à l'administrateur.</div></div>
+    <div class="card" style="margin-bottom:13px">
+      <div class="sumrow"><span class="sumkey">Km parcourus</span><span class="sumval" id="cKm" style="color:var(--ac)">—</span></div>
+      <div class="sumrow"><span class="sumkey">Total colis</span><span class="sumval" id="cColis" style="color:var(--blue)">—</span></div>
+      <div class="sumrow"><span class="sumkey">Dépenses</span><span class="sumval" id="cExp" style="color:var(--yellow)">—</span></div>
     </div>
-    <div class="card" style="margin-bottom:16px">
-      <div class="summary-row">
-        <span class="summary-key">Km parcourus</span>
-        <span class="summary-val" id="confirmKmTotal" style="color:var(--accent)">—</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-key">Total colis</span>
-        <span class="summary-val" id="confirmTotalColis" style="color:var(--blue)">—</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-key">Total dépenses</span>
-        <span class="summary-val" id="confirmTotalExp" style="color:var(--yellow)">—</span>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-ghost" onclick="closeModal('confirmEndModal')">Retour</button>
-      <button class="btn" style="background:var(--red);color:#fff" onclick="finalizeDay()">
-        <i class="fas fa-check"></i> Confirmer
-      </button>
+    <div class="btn2col">
+      <button class="btn btn-ghost" id="btnCancelEnd">Retour</button>
+      <button class="btn" id="btnConfirmEndFinal" style="background:var(--red);color:#fff"><i class="fas fa-check"></i> Confirmer</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     MODAL : JOURNÉE TERMINÉE ✅
-══════════════════════════════════════ -->
-<div class="modal-bg" id="dayDoneModal">
+<div class="mbg" id="mDone">
   <div class="modal" style="text-align:center">
-    <div class="modal-handle"></div>
-    <div style="font-size:64px;margin-bottom:12px">✅</div>
-    <div class="modal-title" style="font-size:22px">Journée terminée !</div>
-    <div style="font-size:14px;color:var(--text2);margin:10px 0 24px">Toutes les données ont été envoyées à l'administrateur avec succès.</div>
-    <div class="card" style="text-align:left;margin-bottom:20px">
-      <div class="summary-row">
-        <span class="summary-key">Km parcourus</span>
-        <span class="summary-val" id="doneKmTotal" style="color:var(--accent)">—</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-key">Total colis</span>
-        <span class="summary-val" id="doneTotalColis" style="color:var(--blue)">—</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-key">Dépenses</span>
-        <span class="summary-val" id="doneTotalExp" style="color:var(--yellow)">—</span>
-      </div>
+    <div class="mhandle"></div>
+    <div style="font-size:56px;margin-bottom:10px">✅</div>
+    <div class="mttl" style="font-size:20px">Journée terminée !</div>
+    <div style="font-size:13px;color:var(--t2);margin:8px 0 18px">Données envoyées à l'administrateur.</div>
+    <div class="card" style="text-align:left;margin-bottom:16px">
+      <div class="sumrow"><span class="sumkey">Km parcourus</span><span class="sumval" id="dKm" style="color:var(--ac)">—</span></div>
+      <div class="sumrow"><span class="sumkey">Total colis</span><span class="sumval" id="dColis" style="color:var(--blue)">—</span></div>
+      <div class="sumrow"><span class="sumkey">Dépenses</span><span class="sumval" id="dExp" style="color:var(--yellow)">—</span></div>
     </div>
-    <button class="btn btn-ghost" onclick="closeModal('dayDoneModal');resetDay()">Fermer</button>
+    <button class="btn btn-ghost" id="btnCloseDone">Fermer</button>
   </div>
 </div>
 
-<!-- TOAST -->
-<div id="toast"><span class="toast-icon" id="toastIcon"></span><span id="toastMsg"></span></div>
+<div class="mbg" id="mDriverForm">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mttl" id="dfTitle">Nouveau livreur</div>
+    <div class="msub" id="dfSub">Le livreur se connecte avec ces identifiants</div>
+    <div class="mfield"><label class="ilbl">Nom complet</label><input class="ibox" type="text" id="dfName" placeholder="Ex: Ahmed Khalil" autocomplete="off"></div>
+    <div class="mfield"><label class="ilbl">Email (identifiant)</label><input class="ibox" type="email" id="dfEmail" placeholder="ahmed@email.com" inputmode="email" autocapitalize="none" autocomplete="off"></div>
+    <div class="mfield"><label class="ilbl">Mot de passe</label><input class="ibox" type="text" id="dfPass" placeholder="Ex: MonMotDePasse123" autocomplete="off"></div>
+    <div class="iinfo">💡 Communiquez l'email et le mot de passe au livreur. Il se connecte sur cette même application.</div>
+    <div class="btn2col">
+      <button class="btn btn-ghost" id="btnCancelDriver">Annuler</button>
+      <button class="btn btn-ac" id="btnSaveDriver"><i class="fas fa-check"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
 
-</div><!-- /#app -->
+<div class="mbg" id="mDelDriver">
+  <div class="modal" style="text-align:center">
+    <div class="mhandle"></div>
+    <div style="font-size:40px;margin-bottom:10px">🗑️</div>
+    <div class="mttl">Supprimer ce livreur ?</div>
+    <div style="font-size:14px;color:var(--t2);margin:8px 0 20px" id="delDriverName">Ce compte sera supprimé.</div>
+    <div class="btn2col">
+      <button class="btn btn-ghost" id="btnCancelDel">Annuler</button>
+      <button class="btn btn-red" id="btnConfirmDel"><i class="fas fa-trash"></i> Supprimer</button>
+    </div>
+  </div>
+</div>
 
-<script>
-// ══════════════════════════════════════
-// DEMO ACCOUNTS (remplacé par API en production)
-// ══════════════════════════════════════
-const DEMO_ACCOUNTS = [
-  { email:'ahmed.k@carlogistique.com',   password:'Livreur123!', name:'Ahmed Khalil',    initials:'AK' },
-  { email:'mehdi.b@carlogistique.com',   password:'Livreur123!', name:'Mehdi Benali',     initials:'MB' },
-  { email:'karim.l@carlogistique.com',   password:'Livreur123!', name:'Karim Larbi',      initials:'KL' },
-  { email:'youssef.m@carlogistique.com', password:'Livreur123!', name:'Youssef Mansouri', initials:'YM' },
-  // Compte test facile
-  { email:'test@test.com', password:'test', name:'Livreur Test', initials:'LT' },
-];
+<div id="toast"><span id="toastIco"></span> <span id="toastMsg"></span></div>
+</div>
 
-// ══════════════════════════════════════
-// STATE
-// ══════════════════════════════════════
-let currentUser = null;
-let currentScreen = 'login';
-let photoCallback = null;
-let expensePhotoData = null;
-let scanPhotoData = null;
-let odoPhotoData = null;
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+(function() {
+'use strict';
 
-let day = {
-  started: false,
-  ended: false,
-  date: null,
-  kmStart: null,
-  kmEnd: null,
-  stopsDelivered: 0,
-  packagesDelivered: 0,
-  stopsPickup: 0,
-  packagesPickup: 0,
-  exceptions: '',
-  expenses: [],
+/* ── CONSTANTS ── */
+var ADMIN_EMAIL = 'Carlogistique@gmail.com';
+var ADMIN_PASS  = 'RAOUFAYOUB1500!';
+
+/* ── STATE ── */
+var currentUser   = null;
+var expPhotoData  = null;
+var scanPhotoData = null;
+var odoPhotoData  = null;
+var photoTarget   = null;
+var expType       = 'Essence';
+var editEmail     = null;
+var pendingDelEmail = null;
+var holdTimer     = null;
+var holdInterval  = null;
+var toastTimer    = null;
+
+var day = {
+  started:false, ended:false, date:null,
+  kmStart:null, kmEnd:null,
+  stopsDelivered:0, packagesDelivered:0,
+  stopsPickup:0, packagesPickup:0,
+  exceptions:'', expenses:[]
 };
 
-// ══════════════════════════════════════
-// INIT
-// ══════════════════════════════════════
-window.addEventListener('DOMContentLoaded', () => {
-  // Check saved session
-  const saved = localStorage.getItem('cl_session');
-  if (saved) {
-    try {
-      const s = JSON.parse(saved);
-      currentUser = s.user;
-      day = s.day || day;
-      initApp();
-      showScreen('home');
-    } catch(e) { localStorage.removeItem('cl_session'); }
+/* ══════════════════════════════════════════════
+   FIREBASE CONFIG — remplacez par vos valeurs
+   (voir étapes dans le README)
+══════════════════════════════════════════════ */
+var FB_CONFIG = {
+  apiKey:            "AIzaSyA_yGcerf84jzXaoRPjf_NUhd5oN0tTLF8",
+  authDomain:        "carlogistique-suivi.firebaseapp.com",
+  projectId:         "carlogistique-suivi",
+  storageBucket:     "carlogistique-suivi.firebasestorage.app",
+  messagingSenderId: "612910779004",
+  appId:             "1:612910779004:web:2bed6b1ac94a0d9fae17f9"
+};
+
+var db      = null;
+var storage = null;
+var fbReady = false;
+
+function initFirebase() {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    db      = firebase.firestore();
+    storage = firebase.storage();
+    fbReady = true;
+    console.log('✅ Firebase connecté');
+  } catch(e) {
+    console.warn('Firebase non configuré — mode local uniquement', e.message);
+    fbReady = false;
   }
+}
 
-  // Set today date
-  const today = new Date();
-  document.getElementById('startDayDate').textContent = today.toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+/* ── STORAGE LOCAL (fallback si Firebase non configuré) ── */
+function getDrivers() {
+  try {
+    var s = localStorage.getItem('cl_drivers');
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  var d = [
+    {email:'ahmed@carlogistique.com',   password:'1234', name:'Ahmed Khalil',    initials:'AK', active:true},
+    {email:'mehdi@carlogistique.com',   password:'1234', name:'Mehdi Benali',     initials:'MB', active:true},
+    {email:'karim@carlogistique.com',   password:'1234', name:'Karim Larbi',      initials:'KL', active:true},
+    {email:'youssef@carlogistique.com', password:'1234', name:'Youssef Mansouri', initials:'YM', active:true},
+  ];
+  localStorage.setItem('cl_drivers', JSON.stringify(d));
+  return d;
+}
+function saveDrivers(list) {
+  localStorage.setItem('cl_drivers', JSON.stringify(list));
+  /* Sync Firebase */
+  if (fbReady) {
+    db.collection('config').doc('drivers').set({ list: list })
+      .catch(function(e){ console.warn('Sync drivers Firebase:', e.message); });
+  }
+}
 
-  // Photo input handler
-  document.getElementById('photoInput').addEventListener('change', handlePhotoCapture);
-
-  // GPS simulation
-  startGPS();
-});
-
-// ══════════════════════════════════════
-// AUTH
-// ══════════════════════════════════════
-function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-  const pass  = document.getElementById('loginPass').value;
-  const errEl = document.getElementById('loginError');
-  const btn   = document.getElementById('loginBtn');
-
-  errEl.style.display = 'none';
-  btn.textContent = 'Connexion...'; btn.disabled = true;
-
-  setTimeout(() => {
-    const account = DEMO_ACCOUNTS.find(a => a.email.toLowerCase() === email && a.password === pass);
-    if (account) {
-      currentUser = account;
-      saveSession();
-      initApp();
-      showScreen('home');
-      showToast(`Bienvenue, ${account.name.split(' ')[0]} ! 👋`, 'success');
+/* Charger livreurs depuis Firebase (admin) */
+function loadDriversFromFirebase(callback) {
+  if (!fbReady) { callback(getDrivers()); return; }
+  db.collection('config').doc('drivers').get().then(function(doc) {
+    if (doc.exists && doc.data().list) {
+      var list = doc.data().list;
+      localStorage.setItem('cl_drivers', JSON.stringify(list));
+      callback(list);
     } else {
-      errEl.style.display = 'block';
-      btn.textContent = 'Se connecter'; btn.disabled = false;
+      callback(getDrivers());
     }
-  }, 600);
-}
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && currentScreen === 'login') doLogin();
-});
-
-function doLogout() {
-  if (!confirm('Se déconnecter ?')) return;
-  currentUser = null;
-  localStorage.removeItem('cl_session');
-  day = { started:false, ended:false, date:null, kmStart:null, kmEnd:null, stopsDelivered:0, packagesDelivered:0, stopsPickup:0, packagesPickup:0, exceptions:'', expenses:[] };
-  showScreen('login');
-}
-
-// ══════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById(id + 'Screen') || document.getElementById(id);
-  if (target) target.classList.add('active');
-  currentScreen = id;
-
-  const noNavScreens = ['startDay','endDay'];
-  const nav = document.getElementById('bottomNav');
-  nav.style.display = noNavScreens.includes(id) ? 'none' : 'flex';
-}
-
-function navTo(id) {
-  if (!day.started && (id === 'delivery' || id === 'expenses')) {
-    showToast('Commencez d\'abord votre journée', 'error');
-    return;
-  }
-  showScreen(id);
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const navBtn = document.getElementById('nav-' + id);
-  if (navBtn) navBtn.classList.add('active');
-}
-
-function goToStartDay() {
-  if (day.started) { showToast('Journée déjà démarrée', 'error'); return; }
-  showScreen('startDay');
-}
-
-function goToEndDay() {
-  showScreen('endDay');
-  updateEndDayUI();
-}
-
-// ══════════════════════════════════════
-// START DAY
-// ══════════════════════════════════════
-function confirmStartDay() {
-  const km = parseInt(document.getElementById('kmStartInput').value);
-  if (!km || km < 100) { showToast('Entrez un kilométrage valide', 'error'); return; }
-
-  day.started = true;
-  day.date = new Date().toISOString().split('T')[0];
-  day.kmStart = km;
-
-  saveSession();
-  updateHomeUI();
-  showScreen('home');
-  showToast(`🚀 Journée démarrée ! Km départ : ${km.toLocaleString()}`, 'success');
-  addTimeline(`Journée démarrée — Km départ : <strong>${km.toLocaleString()}</strong>`);
-}
-
-// ══════════════════════════════════════
-// COUNTERS (Livraison / Ramassage)
-// ══════════════════════════════════════
-function changeCounter(field, delta) {
-  day[field] = Math.max(0, (day[field] || 0) + delta);
-  document.getElementById('cnt-' + field).textContent = day[field];
-  updateLiveTotals();
-  saveSession();
-}
-
-function updateLiveTotals() {
-  const ts = (day.stopsDelivered||0) + (day.stopsPickup||0);
-  const tc = (day.packagesDelivered||0) + (day.packagesPickup||0);
-  const el1 = document.getElementById('totalStopsLive');
-  const el2 = document.getElementById('totalColisLive');
-  if (el1) el1.textContent = ts;
-  if (el2) el2.textContent = tc;
-}
-
-function saveDelivery() {
-  day.exceptions = document.getElementById('exceptionsInput').value;
-  saveSession();
-  updateHomeUI();
-  showToast('✅ Données de livraison sauvegardées', 'success');
-  addTimeline(`Livraison mise à jour — <strong>${day.packagesDelivered}</strong> colis livrés, <strong>${day.packagesPickup}</strong> ramassés`);
-  navTo('home');
-}
-
-// ══════════════════════════════════════
-// EXPENSES
-// ══════════════════════════════════════
-let selectedExpenseType = 'Essence';
-
-function selectExpenseType(el) {
-  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedExpenseType = el.dataset.type;
-}
-
-function openAddExpense() {
-  if (!day.started) { showToast('Commencez d\'abord votre journée', 'error'); return; }
-  expensePhotoData = null;
-  document.getElementById('expenseAmount').value = '';
-  const zone = document.getElementById('expensePhotoZone');
-  zone.classList.remove('has-photo');
-  zone.innerHTML = `
-    <div class="photo-zone-icon">📷</div>
-    <div class="photo-zone-text">Photographier le reçu</div>
-    <div class="photo-zone-hint">Photo obligatoire · Compressée automatiquement</div>
-  `;
-  document.getElementById('addExpenseModal').classList.add('open');
-}
-
-function takeExpensePhoto() {
-  photoCallback = 'expense';
-  document.getElementById('photoInput').click();
-}
-
-function confirmAddExpense() {
-  const amount = parseFloat(document.getElementById('expenseAmount').value);
-  if (!amount || amount <= 0) { showToast('Entrez un montant valide', 'error'); return; }
-  if (!expensePhotoData) { showToast('La photo du reçu est obligatoire', 'error'); return; }
-
-  const expense = {
-    id: Date.now(),
-    type: selectedExpenseType,
-    amount,
-    photo: expensePhotoData,
-    time: new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}),
-  };
-  day.expenses.push(expense);
-  saveSession();
-  renderExpenses();
-  updateHomeUI();
-  closeModal('addExpenseModal');
-  showToast(`✅ Dépense ajoutée : ${amount}€ (${selectedExpenseType})`, 'success');
-  addTimeline(`Dépense ajoutée — <strong>${amount}€</strong> (${selectedExpenseType})`);
-}
-
-function renderExpenses() {
-  const list = document.getElementById('expensesList');
-  const total = day.expenses.reduce((s,e) => s+e.amount, 0);
-  document.getElementById('expensesTotal').textContent = `Total : ${total}€`;
-
-  if (!day.expenses.length) {
-    list.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text3)">
-      <div style="font-size:40px;margin-bottom:12px">🧾</div>
-      <div style="font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px">Aucune dépense</div>
-      <div style="font-size:13px">Appuyez sur + Ajouter pour enregistrer une dépense</div>
-    </div>`;
-    return;
-  }
-
-  const icons = { Essence:'⛽', Péage:'🛣️', Autre:'📌' };
-  const colors = { Essence:'rgba(249,115,22,0.15)', Péage:'rgba(59,130,246,0.15)', Autre:'rgba(168,85,247,0.15)' };
-
-  list.innerHTML = day.expenses.map(e => `
-    <div class="expense-item">
-      <div class="expense-icon" style="background:${colors[e.type]||'rgba(255,255,255,0.05)'}">
-        ${icons[e.type]||'📌'}
-      </div>
-      <div class="expense-info">
-        <div class="expense-type">${e.type}</div>
-        <div class="expense-time">${e.time} · <span style="color:var(--green)">📷 Reçu</span></div>
-      </div>
-      <div class="expense-amount">${e.amount}€</div>
-      <div onclick="deleteExpense(${e.id})" style="padding:8px;color:var(--text3);cursor:pointer;font-size:14px">
-        <i class="fas fa-trash-alt"></i>
-      </div>
-    </div>
-  `).join('') + `
-    <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-top:4px">
-      <span style="font-size:14px;font-weight:700">Total dépenses</span>
-      <span style="font-size:22px;font-weight:800;color:var(--yellow)">${total}€</span>
-    </div>
-  `;
-}
-
-function deleteExpense(id) {
-  if (!confirm('Supprimer cette dépense ?')) return;
-  day.expenses = day.expenses.filter(e => e.id !== id);
-  saveSession();
-  renderExpenses();
-  updateHomeUI();
-  showToast('Dépense supprimée', 'success');
-}
-
-// ══════════════════════════════════════
-// END DAY
-// ══════════════════════════════════════
-function updateKmEnd() {
-  const km = parseInt(document.getElementById('kmEndInput').value);
-  const card = document.getElementById('kmTotalCard');
-  const display = document.getElementById('kmTotalDisplay');
-  const chk = document.getElementById('chk-km');
-  const lbl = document.getElementById('chk-km-label');
-
-  if (km && day.kmStart && km > day.kmStart) {
-    const total = km - day.kmStart;
-    display.textContent = `${total} km`;
-    card.style.display = 'block';
-    chk.classList.add('done'); chk.querySelector('i').style.display = 'block';
-    lbl.classList.add('done');
-    day.kmEnd = km;
-  } else {
-    card.style.display = 'none';
-    chk.classList.remove('done'); chk.querySelector('i').style.display = 'none';
-    lbl.classList.remove('done');
-  }
-  checkFinishReady();
-}
-
-function takePhoto(type) {
-  photoCallback = type;
-  document.getElementById('photoInput').click();
-}
-
-function checkFinishReady() {
-  const btn = document.getElementById('finishDayBtn');
-  const kmOk  = day.kmEnd && day.kmEnd > day.kmStart;
-  const scanOk = !!scanPhotoData;
-  const odoOk  = !!odoPhotoData;
-  btn.disabled = !(kmOk && scanOk && odoOk);
-}
-
-function confirmEndDay() {
-  const kmTotal = day.kmEnd - day.kmStart;
-  const totalColis = (day.packagesDelivered||0) + (day.packagesPickup||0);
-  const totalExp = day.expenses.reduce((s,e)=>s+e.amount,0);
-  document.getElementById('confirmKmTotal').textContent = `${kmTotal} km`;
-  document.getElementById('confirmTotalColis').textContent = totalColis;
-  document.getElementById('confirmTotalExp').textContent = `${totalExp}€`;
-  document.getElementById('confirmEndModal').classList.add('open');
-}
-
-function finalizeDay() {
-  closeModal('confirmEndModal');
-  day.ended = true;
-
-  const kmTotal = day.kmEnd - day.kmStart;
-  const totalColis = (day.packagesDelivered||0) + (day.packagesPickup||0);
-  const totalExp = day.expenses.reduce((s,e)=>s+e.amount,0);
-
-  document.getElementById('doneKmTotal').textContent = `${kmTotal} km`;
-  document.getElementById('doneTotalColis').textContent = totalColis;
-  document.getElementById('doneTotalExp').textContent = `${totalExp}€`;
-
-  saveSession();
-  setTimeout(() => {
-    document.getElementById('dayDoneModal').classList.add('open');
-  }, 300);
-}
-
-function resetDay() {
-  day = { started:false, ended:false, date:null, kmStart:null, kmEnd:null, stopsDelivered:0, packagesDelivered:0, stopsPickup:0, packagesPickup:0, exceptions:'', expenses:[] };
-  scanPhotoData = null; odoPhotoData = null;
-  saveSession();
-  updateHomeUI();
-  showScreen('home');
-}
-
-function updateEndDayUI() {
-  document.getElementById('endKmStart').textContent = day.kmStart ? `${day.kmStart.toLocaleString()} km` : '—';
-  document.getElementById('endColis').textContent = day.packagesDelivered || 0;
-  document.getElementById('endRamassage').textContent = day.packagesPickup || 0;
-  document.getElementById('endExpenses').textContent = `${day.expenses.reduce((s,e)=>s+e.amount,0)}€`;
-  checkFinishReady();
-}
-
-// ══════════════════════════════════════
-// HOME UI UPDATE
-// ══════════════════════════════════════
-function initApp() {
-  if (!currentUser) return;
-  document.getElementById('homeDriverName').textContent = currentUser.name;
-  document.getElementById('homeAvatar').textContent = currentUser.initials;
-  document.getElementById('homeDate').textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-
-  // Restore counters
-  ['stopsDelivered','packagesDelivered','stopsPickup','packagesPickup'].forEach(f => {
-    const el = document.getElementById('cnt-' + f);
-    if (el) el.textContent = day[f] || 0;
-  });
-  if (day.exceptions) {
-    const el = document.getElementById('exceptionsInput');
-    if (el) el.value = day.exceptions;
-  }
-  updateLiveTotals();
-  renderExpenses();
-  updateHomeUI();
-}
-
-function updateHomeUI() {
-  const started = day.started && !day.ended;
-  const ended = day.ended;
-
-  document.getElementById('startDaySection').style.display = day.started ? 'none' : 'block';
-  document.getElementById('endDaySection').style.display   = started ? 'block' : 'none';
-  document.getElementById('homeStats').style.display       = started ? 'block' : 'none';
-
-  if (started || ended) {
-    document.getElementById('statKmStart').textContent = day.kmStart?.toLocaleString() || '—';
-    document.getElementById('statExpenses').textContent = day.expenses.reduce((s,e)=>s+e.amount,0);
-    document.getElementById('statDelivered').textContent = day.packagesDelivered || 0;
-    document.getElementById('statPickup').textContent = day.packagesPickup || 0;
-  }
-}
-
-function addTimeline(html) {
-  const tl = document.getElementById('homeTimeline');
-  const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-  const item = document.createElement('div');
-  item.className = 'tl-item';
-  item.innerHTML = `<div class="tl-time">${now}</div><div class="tl-text">${html}</div>`;
-  tl.insertBefore(item, tl.firstChild);
-}
-
-// ══════════════════════════════════════
-// PHOTO HANDLING
-// ══════════════════════════════════════
-function handlePhotoCapture(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    const dataUrl = ev.target.result;
-    compressImage(dataUrl, 1200, 0.75, (compressed) => {
-      if (photoCallback === 'expense') {
-        expensePhotoData = compressed;
-        const zone = document.getElementById('expensePhotoZone');
-        zone.classList.add('has-photo');
-        zone.innerHTML = `
-          <img src="${compressed}" alt="Reçu">
-          <div class="photo-zone-overlay">
-            <div style="font-size:24px">✅</div>
-            <div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.7)">Appuyez pour reprendre</div>
-          </div>
-          <div class="photo-badge">✓ OK</div>
-        `;
-      } else if (photoCallback === 'scan') {
-        scanPhotoData = compressed;
-        const zone = document.getElementById('photoScan');
-        zone.classList.add('has-photo');
-        zone.innerHTML = `
-          <img src="${compressed}" alt="Rapport scanner">
-          <div class="photo-zone-overlay">
-            <div style="font-size:24px">✅</div>
-            <div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div>
-          </div>
-          <div class="photo-badge">✓ OK</div>
-        `;
-        const chk = document.getElementById('chk-scan');
-        chk.classList.add('done'); chk.querySelector('i').style.display = 'block';
-        document.getElementById('chk-scan-label').classList.add('done');
-        checkFinishReady();
-        showToast('📄 Photo rapport enregistrée', 'success');
-      } else if (photoCallback === 'odo') {
-        odoPhotoData = compressed;
-        const zone = document.getElementById('photoOdo');
-        zone.classList.add('has-photo');
-        zone.innerHTML = `
-          <img src="${compressed}" alt="Kilométrage">
-          <div class="photo-zone-overlay">
-            <div style="font-size:24px">✅</div>
-            <div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div>
-          </div>
-          <div class="photo-badge">✓ OK</div>
-        `;
-        const chk = document.getElementById('chk-odo');
-        chk.classList.add('done'); chk.querySelector('i').style.display = 'block';
-        document.getElementById('chk-odo-label').classList.add('done');
-        checkFinishReady();
-        showToast('🚗 Photo kilométrage enregistrée', 'success');
-      }
-    });
-  };
-  reader.readAsDataURL(file);
-  e.target.value = '';
-}
-
-function compressImage(dataUrl, maxW, quality, callback) {
-  const img = new Image();
-  img.onload = () => {
-    const ratio = Math.min(1, maxW / img.width);
-    const canvas = document.createElement('canvas');
-    canvas.width  = img.width  * ratio;
-    canvas.height = img.height * ratio;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    callback(canvas.toDataURL('image/jpeg', quality));
-  };
-  img.src = dataUrl;
-}
-
-// ══════════════════════════════════════
-// GPS SIMULATION
-// ══════════════════════════════════════
-function startGPS() {
-  if ('geolocation' in navigator) {
-    navigator.geolocation.watchPosition(
-      pos => {
-        document.getElementById('gpsText').textContent =
-          `GPS actif — ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
-      },
-      () => {
-        document.getElementById('gpsText').textContent = 'GPS — Localisation en arrière-plan';
-      },
-      { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 }
-    );
-  }
-}
-
-// ══════════════════════════════════════
-// MODAL / TOAST / SESSION
-// ══════════════════════════════════════
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-document.querySelectorAll('.modal-bg').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
-});
-
-function showToast(msg, type = 'success') {
-  const t = document.getElementById('toast');
-  const ic = document.getElementById('toastIcon');
-  const m = document.getElementById('toastMsg');
-  t.className = `show ${type}`;
-  ic.textContent = type === 'success' ? '✅' : '❌';
-  m.textContent = msg;
-  clearTimeout(t._t);
-  t._t = setTimeout(() => { t.className = ''; }, 3500);
+  }).catch(function(){ callback(getDrivers()); });
 }
 
 function saveSession() {
-  if (!currentUser) return;
-  localStorage.setItem('cl_session', JSON.stringify({ user: currentUser, day }));
+  try { localStorage.setItem('cl_session', JSON.stringify({user:currentUser, day:day})); } catch(e) {}
 }
+function clearSession() { try { localStorage.removeItem('cl_session'); } catch(e) {} }
+
+/* ── UPLOAD PHOTO vers Firebase Storage ── */
+function uploadPhoto(dataUrl, path, callback) {
+  if (!fbReady || !dataUrl) { callback(dataUrl); return; }
+  /* Convertir base64 en blob */
+  var arr = dataUrl.split(','), mime = arr[0].match(/:(.*?);/)[1];
+  var bstr = atob(arr[1]), n = bstr.length, u8 = new Uint8Array(n);
+  while(n--){ u8[n] = bstr.charCodeAt(n); }
+  var blob = new Blob([u8], {type: mime});
+
+  var ref = storage.ref(path);
+  ref.put(blob).then(function() {
+    return ref.getDownloadURL();
+  }).then(function(url) {
+    callback(url);
+  }).catch(function(e) {
+    console.warn('Upload photo échoué, stockage local utilisé:', e.message);
+    callback(dataUrl); /* fallback local */
+  });
+}
+
+/* ── SAUVEGARDER RAPPORT sur Firebase ── */
+function saveReportToFirebase(rep, driverEmail, callback) {
+  if (!fbReady) { saveReportLocal(rep, driverEmail); if(callback) callback(); return; }
+
+  var docId = driverEmail.replace(/[@.]/g,'_') + '_' + rep.date;
+  var toSave = Object.assign({}, rep);
+  /* Les photos base64 sont trop lourdes pour Firestore — on utilise les URLs Firebase Storage */
+  /* photoScan et photoOdo sont déjà des URLs si uploadées, sinon null */
+
+  db.collection('reports').doc(docId).set(toSave)
+    .then(function() {
+      console.log('✅ Rapport sauvegardé Firebase');
+      saveReportLocal(rep, driverEmail);
+      if(callback) callback();
+    })
+    .catch(function(e) {
+      console.warn('Firestore save échoué:', e.message);
+      saveReportLocal(rep, driverEmail);
+      if(callback) callback();
+    });
+}
+
+function saveReportLocal(rep, driverEmail) {
+  var key = 'cl_reports_' + driverEmail;
+  var ex = []; try { ex = JSON.parse(localStorage.getItem(key)||'[]'); } catch(e2) {}
+  var idx = ex.findIndex(function(r){return r.date===rep.date;});
+  if(idx!==-1) ex[idx]=rep; else ex.push(rep);
+  localStorage.setItem(key, JSON.stringify(ex));
+}
+
+/* ── CHARGER TOUS LES RAPPORTS (admin) ── */
+function getAllReports() {
+  /* D'abord retourner le cache local immédiatement */
+  var reps = [];
+  var drivers = getDrivers();
+  drivers.forEach(function(d){
+    try{
+      var s=localStorage.getItem('cl_reports_'+d.email);
+      if(s) JSON.parse(s).forEach(function(r){
+        reps.push(Object.assign({},r,{driverName:d.name,driverEmail:d.email}));
+      });
+    }catch(e){}
+  });
+  return reps;
+}
+
+function loadReportsFromFirebase(callback) {
+  if (!fbReady) { callback(getAllReports()); return; }
+  db.collection('reports').orderBy('completedAt','desc').get()
+    .then(function(snap) {
+      var drivers = getDrivers();
+      var reps = [];
+      snap.forEach(function(doc) {
+        var r = doc.data();
+        var d = drivers.find(function(x){ return x.email === r.driverEmail; });
+        if (d) reps.push(Object.assign({}, r, {driverName:d.name}));
+        else reps.push(r);
+      });
+      /* Mettre à jour cache local */
+      var byDriver = {};
+      reps.forEach(function(r){
+        if(!byDriver[r.driverEmail]) byDriver[r.driverEmail]=[];
+        byDriver[r.driverEmail].push(r);
+      });
+      Object.keys(byDriver).forEach(function(email){
+        localStorage.setItem('cl_reports_'+email, JSON.stringify(byDriver[email]));
+      });
+      callback(reps);
+    })
+    .catch(function(e){
+      console.warn('Firestore load échoué:', e.message);
+      callback(getAllReports());
+    });
+}
+
+/* ── AUTH ── */
+function findAccount(email, pass) {
+  var e = (email || '').trim().toLowerCase();
+  var p = (pass  || '').trim();
+  if (e === ADMIN_EMAIL.toLowerCase() && p === ADMIN_PASS)
+    return {email:ADMIN_EMAIL, name:'Car Logistique', initials:'CL', role:'admin'};
+  var drivers = getDrivers();
+  for (var i = 0; i < drivers.length; i++) {
+    var d = drivers[i];
+    if (d.active && d.email.toLowerCase() === e && d.password === p)
+      return d;
+  }
+  return null;
+}
+
+/* ── SCREEN ── */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); });
+  var el = document.getElementById(id);
+  if (el) el.classList.add('on');
+  var t = document.getElementById('toast');
+  if (t) { t.classList.remove('nonav'); if (id==='scStartDay'||id==='scEndDay') t.classList.add('nonav'); }
+}
+
+/* ── TOAST ── */
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  var nonav = el.classList.contains('nonav');
+  el.className = 'on ' + (type||'success') + (nonav?' nonav':'');
+  document.getElementById('toastIco').textContent = (type==='error') ? '❌' : '✅';
+  document.getElementById('toastMsg').textContent = msg;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.className = nonav ? 'nonav' : ''; }, 3000);
+}
+
+/* ── MODAL ── */
+function openModal(id) { var el=document.getElementById(id); if(el) el.classList.add('on'); }
+function closeModal(id){ var el=document.getElementById(id); if(el) el.classList.remove('on'); }
+
+/* ── LOGIN ── */
+function doLogin() {
+  var email = document.getElementById('loginEmail').value;
+  var pass  = document.getElementById('loginPass').value;
+  var errEl = document.getElementById('loginErr');
+  var btn   = document.getElementById('loginBtn');
+
+  errEl.style.display = 'none';
+  if (!email || !pass) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Veuillez remplir les deux champs.';
+    return;
+  }
+  btn.textContent = 'Connexion…';
+  btn.disabled = true;
+
+  setTimeout(function() {
+    var acc = findAccount(email, pass);
+    if (acc) {
+      currentUser = acc;
+      saveSession();
+      if (acc.role === 'admin') {
+        show('scAdmin');
+        renderAdminDash();
+        syncDriversFromFirebase();
+        startDashAutoRefresh();
+        toast('Bienvenue, ' + acc.name + ' 🛡️', 'success');
+      } else {
+        initDriverUI();
+        show('scHome');
+        toast('Bienvenue, ' + acc.name.split(' ')[0] + ' 👋', 'success');
+      }
+    } else {
+      errEl.style.display = 'block';
+      errEl.textContent = 'Email ou mot de passe incorrect';
+      btn.textContent = 'Se connecter';
+      btn.disabled = false;
+    }
+  }, 300);
+}
+
+function doLogout() {
+  if (!confirm('Se déconnecter ?')) return;
+  stopGPS();
+  stopDashAutoRefresh();
+  currentUser = null;
+  day = {started:false,ended:false,date:null,kmStart:null,kmEnd:null,stopsDelivered:0,packagesDelivered:0,stopsPickup:0,packagesPickup:0,exceptions:'',expenses:[]};
+  scanPhotoData = null; odoPhotoData = null;
+  clearSession();
+  /* Reset login form completely */
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPass').value  = '';
+  document.getElementById('loginErr').style.display = 'none';
+  var btn = document.getElementById('loginBtn');
+  btn.textContent = 'Se connecter';
+  btn.disabled = false;
+  show('scLogin');
+}
+
+/* ── DRIVER UI ── */
+function initDriverUI() {
+  if (!currentUser) return;
+  var init = (currentUser.initials || (currentUser.name||'').split(' ').map(function(x){return x[0];}).join('')).slice(0,2).toUpperCase();
+  document.getElementById('homeAvatar').textContent = init;
+  document.getElementById('homeName').textContent = currentUser.name;
+  document.getElementById('homeDate').textContent = new Date().toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long'});
+  ['stopsDelivered','packagesDelivered','stopsPickup','packagesPickup'].forEach(function(f){
+    var el = document.getElementById('cnt-'+f); if(el) el.textContent = day[f]||0;
+  });
+  var exc = document.getElementById('exceptionsInput'); if(exc && day.exceptions) exc.value = day.exceptions;
+  updateTotals();
+  renderExpenses();
+  refreshHome();
+}
+
+function refreshHome() {
+  var on = day.started && !day.ended;
+  document.getElementById('divStart').style.display = day.started ? 'none' : 'block';
+  document.getElementById('divEnd').style.display   = on ? 'block' : 'none';
+  document.getElementById('homeStats').style.display = on ? 'block' : 'none';
+  if (on) {
+    document.getElementById('stKm').textContent  = day.kmStart ? day.kmStart.toLocaleString() : '—';
+    document.getElementById('stExp').textContent = day.expenses.reduce(function(s,e){return s+e.amount;},0);
+    document.getElementById('stDel').textContent  = day.packagesDelivered||0;
+    document.getElementById('stPick').textContent = day.packagesPickup||0;
+  }
+}
+
+function addTL(html) {
+  var tl = document.getElementById('homeTL'); if (!tl) return;
+  var now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  var d = document.createElement('div'); d.className = 'tli';
+  d.innerHTML = '<div class="tlt">'+now+'</div><div class="tltx">'+html+'</div>';
+  tl.insertBefore(d, tl.firstChild);
+}
+
+/* ── START DAY ── */
+function confirmStartDay() {
+  var km = parseInt(document.getElementById('kmStartInput').value);
+  if (!km || km < 10) { toast('Entrez un kilométrage valide', 'error'); return; }
+  day.started = true; day.date = new Date().toISOString().split('T')[0]; day.kmStart = km;
+  saveSession(); refreshHome(); show('scHome');
+  toast('🚀 Journée démarrée ! Km : ' + km.toLocaleString(), 'success');
+  addTL('Journée démarrée — Km départ : <strong>' + km.toLocaleString() + '</strong>');
+}
+
+/* ── COUNTERS ── */
+function changeCnt(field, delta) {
+  var el = document.getElementById('cnt-'+field); if (!el) return;
+  var v = Math.max(0, (parseInt(el.textContent)||0) + delta);
+  day[field] = v; el.textContent = v; updateTotals(); saveSession();
+}
+
+function updateTotals() {
+  var ts = (day.stopsDelivered||0)+(day.stopsPickup||0);
+  var tc = (day.packagesDelivered||0)+(day.packagesPickup||0);
+  var e1=document.getElementById('totStops'), e2=document.getElementById('totColis');
+  if(e1) e1.textContent=ts; if(e2) e2.textContent=tc;
+}
+
+function saveDelivery() {
+  var exc = document.getElementById('exceptionsInput'); if(exc) day.exceptions = exc.value;
+  saveSession(); refreshHome();
+  toast('✅ Données sauvegardées', 'success');
+  addTL('Livraison : <strong>'+day.packagesDelivered+'</strong> livrés, <strong>'+day.packagesPickup+'</strong> ramassés');
+}
+
+/* ── EXPENSES ── */
+function renderExpenses() {
+  var list = document.getElementById('expList');
+  var total = day.expenses.reduce(function(s,e){return s+e.amount;},0);
+  var elT = document.getElementById('expTotal'); if(elT) elT.textContent = 'Total : '+total+' €';
+  if (!day.expenses.length) {
+    list.innerHTML = '<div style="text-align:center;padding:52px 20px;color:var(--t3)"><div style="font-size:36px;margin-bottom:10px">🧾</div><div style="font-size:15px;font-weight:700;color:var(--t2);margin-bottom:5px">Aucune dépense</div><div style="font-size:13px">Appuyez sur + Ajouter</div></div>';
+    return;
+  }
+  var icons  = {Essence:'⛽', Péage:'🛣️', Autre:'📌'};
+  var colors = {Essence:'rgba(249,115,22,.15)', Péage:'rgba(59,130,246,.15)', Autre:'rgba(168,85,247,.15)'};
+  list.innerHTML = day.expenses.map(function(e){
+    return '<div class="eitem"><div class="eico" style="background:'+(colors[e.type]||'rgba(255,255,255,.05)')+'">'+( icons[e.type]||'📌')+'</div>'+
+      '<div class="einfo"><div class="etype">'+e.type+'</div><div class="etime">'+e.time+' · <span style="color:var(--green)">📷 Reçu</span></div></div>'+
+      '<div class="eamt">'+e.amount+'€</div>'+
+      '<div class="edel" data-id="'+e.id+'"><i class="fas fa-trash-alt"></i></div></div>';
+  }).join('') +
+    '<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:2px">'+
+    '<span style="font-size:14px;font-weight:700">Total</span><span style="font-size:20px;font-weight:800;color:var(--yellow)">'+total+' €</span></div>';
+}
+
+/* ── END DAY ── */
+function markCheck(boxId, lblId, done) {
+  var box=document.getElementById(boxId), lbl=document.getElementById(lblId); if(!box||!lbl) return;
+  var ico = box.querySelector('.chkico');
+  if (done) { box.classList.add('done'); if(ico) ico.style.display='block'; lbl.classList.add('done'); }
+  else      { box.classList.remove('done'); if(ico) ico.style.display='none'; lbl.classList.remove('done'); }
+}
+
+function checkFinish() {
+  /* Le km de fin est obligatoire. Les photos sont fortement recommandées mais
+     ne bloquent pas si le livreur n'a pas pu les prendre. */
+  var kmOk = !!(day.kmEnd && day.kmEnd > (day.kmStart || 0));
+  var btn = document.getElementById('btnFinish');
+  if (btn) btn.disabled = !kmOk;
+}
+
+function updateEndUI() {
+  document.getElementById('endKmStart').textContent = day.kmStart ? day.kmStart.toLocaleString()+' km' : '—';
+  document.getElementById('endColis').textContent    = day.packagesDelivered||0;
+  document.getElementById('endRamassage').textContent= day.packagesPickup||0;
+  document.getElementById('endExp').textContent      = day.expenses.reduce(function(s,e){return s+e.amount;},0)+' €';
+  checkFinish();
+}
+
+function finalizeDay() {
+  closeModal('mConfirmEnd');
+  day.ended = true;
+
+  var kmT  = (day.kmEnd  || 0) - (day.kmStart || 0);
+  var totC = (day.packagesDelivered || 0) + (day.packagesPickup || 0);
+  var totE = day.expenses.reduce(function(s,e){ return s + e.amount; }, 0);
+
+  /* Afficher les données dans le modal de succès */
+  document.getElementById('dKm').textContent    = kmT + ' km';
+  document.getElementById('dColis').textContent = totC;
+  document.getElementById('dExp').textContent   = totE + ' €';
+
+  /* Construire le rapport */
+  var rep = {
+    date:              day.date || new Date().toISOString().split('T')[0],
+    driverEmail:       currentUser ? currentUser.email : 'unknown',
+    kmStart:           day.kmStart || 0,
+    kmEnd:             day.kmEnd   || 0,
+    kmTotal:           kmT,
+    stopsDelivered:    day.stopsDelivered    || 0,
+    packagesDelivered: day.packagesDelivered || 0,
+    stopsPickup:       day.stopsPickup       || 0,
+    packagesPickup:    day.packagesPickup    || 0,
+    exceptions:        day.exceptions || '',
+    expenses:          day.expenses   || [],
+    photoScan:         scanPhotoData  || null,
+    photoOdo:          odoPhotoData   || null,
+    completedAt:       new Date().toISOString()
+  };
+
+  /* 1. Sauvegarde locale IMMÉDIATE — toujours */
+  if (currentUser) saveReportLocal(rep, currentUser.email);
+  saveSession();
+
+  /* 2. Ouvrir le modal TOUT DE SUITE — ne pas attendre Firebase */
+  openModal('mDone');
+
+  /* 3. Envoyer à Firebase EN ARRIÈRE-PLAN (sans bloquer) */
+  if (fbReady && currentUser) {
+    var docId = currentUser.email.replace(/[@.]/g,'_') + '_' + rep.date;
+    var fbRep = {
+      date:              rep.date,
+      driverEmail:       rep.driverEmail,
+      kmStart:           rep.kmStart,
+      kmEnd:             rep.kmEnd,
+      kmTotal:           rep.kmTotal,
+      stopsDelivered:    rep.stopsDelivered,
+      packagesDelivered: rep.packagesDelivered,
+      stopsPickup:       rep.stopsPickup,
+      packagesPickup:    rep.packagesPickup,
+      exceptions:        rep.exceptions,
+      completedAt:       rep.completedAt,
+      /* Photos: stocker base64 seulement si < 500KB, sinon null */
+      photoScan: (rep.photoScan && rep.photoScan.length < 500000) ? rep.photoScan : null,
+      photoOdo:  (rep.photoOdo  && rep.photoOdo.length  < 500000) ? rep.photoOdo  : null,
+      expenses: (rep.expenses||[]).map(function(e) {
+        return {
+          id: e.id, type: e.type, amount: e.amount, time: e.time,
+          photo: (e.photo && e.photo.length < 300000) ? e.photo : null
+        };
+      })
+    };
+    db.collection('reports').doc(docId).set(fbRep)
+      .then(function() { console.log('✅ Rapport Firebase sauvegardé'); })
+      .catch(function(e) { console.warn('Firebase save (non bloquant):', e.message); });
+  }
+}
+
+function resetDay() {
+  day = {started:false,ended:false,date:null,kmStart:null,kmEnd:null,stopsDelivered:0,packagesDelivered:0,stopsPickup:0,packagesPickup:0,exceptions:'',expenses:[]};
+  scanPhotoData=null; odoPhotoData=null;
+  ['stopsDelivered','packagesDelivered','stopsPickup','packagesPickup'].forEach(function(f){
+    var el=document.getElementById('cnt-'+f); if(el) el.textContent='0';
+  });
+  saveSession(); refreshHome(); show('scHome');
+}
+
+/* ── PHOTO ── */
+function onPhotoSelected(e) {
+  var file = e.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    compressImg(ev.target.result, 1200, 0.75, function(c) {
+      if (photoTarget === 'expense') {
+        expPhotoData = c;
+        var z = document.getElementById('pzoneExp'); z.classList.add('done');
+        z.innerHTML = '<img src="'+c+'"><div class="pzone-ov"><div style="font-size:22px">✅</div><div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div></div><div class="pbadge">✓</div>';
+      } else if (photoTarget === 'scan') {
+        scanPhotoData = c;
+        var z = document.getElementById('pzoneScan'); z.classList.add('done');
+        z.innerHTML = '<img src="'+c+'"><div class="pzone-ov"><div style="font-size:22px">✅</div><div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div></div><div class="pbadge">✓</div>';
+        markCheck('chk-scan','chk-scan-l',true); checkFinish();
+        toast('📄 Photo rapport enregistrée','success');
+      } else if (photoTarget === 'odo') {
+        odoPhotoData = c;
+        var z = document.getElementById('pzoneOdo'); z.classList.add('done');
+        z.innerHTML = '<img src="'+c+'"><div class="pzone-ov"><div style="font-size:22px">✅</div><div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div></div><div class="pbadge">✓</div>';
+        markCheck('chk-odo','chk-odo-l',true); checkFinish();
+        toast('🚗 Photo kilométrage enregistrée','success');
+      }
+    });
+  };
+  reader.readAsDataURL(file); e.target.value = '';
+}
+
+function compressImg(src, maxW, q, cb) {
+  var img = new Image();
+  img.onload = function() {
+    var r = Math.min(1, maxW/img.width);
+    var c = document.createElement('canvas'); c.width=img.width*r; c.height=img.height*r;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    cb(c.toDataURL('image/jpeg',q));
+  };
+  img.src = src;
+}
+
+/* ── GPS TRACKING (livreur → Firebase) ── */
+var gpsWatchId = null;
+
+function startGPS() {
+  if (!navigator.geolocation) {
+    var el = document.getElementById('gpsText');
+    if (el) el.textContent = 'GPS non disponible sur cet appareil';
+    return;
+  }
+  gpsWatchId = navigator.geolocation.watchPosition(
+    function(pos) {
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+      var el = document.getElementById('gpsText');
+      if (el) el.textContent = 'GPS actif — ' + lat.toFixed(5) + ', ' + lng.toFixed(5);
+
+      /* Envoyer position à Firebase si livreur connecté et journée démarrée */
+      if (fbReady && currentUser && currentUser.role !== 'admin' && day.started && !day.ended) {
+        var emailSafe = currentUser.email.replace(/[@.]/g, '_');
+        db.collection('gps').doc(emailSafe).set({
+          email:     currentUser.email,
+          name:      currentUser.name,
+          initials:  currentUser.initials || '',
+          lat:       lat,
+          lng:       lng,
+          accuracy:  pos.coords.accuracy,
+          updatedAt: new Date().toISOString(),
+          active:    true
+        }).catch(function(e){ console.warn('GPS write:', e.message); });
+      }
+    },
+    function(err) {
+      var el = document.getElementById('gpsText');
+      if (el) el.textContent = 'GPS — localisation en arrière-plan';
+    },
+    { enableHighAccuracy:true, maximumAge:20000, timeout:15000 }
+  );
+}
+
+function stopGPS() {
+  if (gpsWatchId !== null && navigator.geolocation) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+  }
+  /* Marquer inactif dans Firebase */
+  if (fbReady && currentUser && currentUser.role !== 'admin') {
+    var emailSafe = currentUser.email.replace(/[@.]/g, '_');
+    db.collection('gps').doc(emailSafe).update({ active: false })
+      .catch(function(){});
+  }
+}
+
+/* ── GPS VIEW (admin) ── */
+var gpsUnsubscribe = null;
+
+function renderAdminGPS() {
+  var list = document.getElementById('gpsDriverList');
+  if (!list) return;
+
+  if (!fbReady) {
+    list.innerHTML = '<div class="iinfo">⚠️ Firebase non configuré. Le suivi GPS en temps réel nécessite Firebase.<br>Suivez les étapes de configuration pour l\'activer.</div>';
+    return;
+  }
+
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--t2)"><i class="fas fa-spinner fa-spin" style="font-size:20px;margin-bottom:8px;display:block"></i>Connexion au GPS live…</div>';
+
+  /* Écouter les mises à jour en temps réel */
+  if (gpsUnsubscribe) gpsUnsubscribe(); /* Annuler l'écoute précédente */
+
+  gpsUnsubscribe = db.collection('gps').onSnapshot(function(snap) {
+    var positions = [];
+    snap.forEach(function(doc){ positions.push(doc.data()); });
+
+    var active   = positions.filter(function(p){ return p.active; });
+    var inactive = positions.filter(function(p){ return !p.active; });
+    var clrs = ['#f97316','#3b82f6','#22c55e','#a855f7','#f59e0b'];
+    var drivers = getDrivers();
+
+    if (!positions.length) {
+      list.innerHTML = '<div style="text-align:center;padding:32px 20px;color:var(--t3)"><div style="font-size:32px;margin-bottom:9px">📍</div><div style="font-size:15px;color:var(--t2);font-weight:600">Aucun livreur en ligne</div><div style="font-size:12px;margin-top:4px">Les livreurs apparaissent ici quand ils démarrent leur journée</div></div>';
+      return;
+    }
+
+    var html = '';
+    if (active.length) {
+      html += '<div class="sec" style="margin-top:0"><span class="ldot"></span> En déplacement ('+active.length+')</div>';
+      html += active.map(function(p, i) {
+        var d = drivers.find(function(x){ return x.email===p.email; });
+        var clr = d ? clrs[drivers.indexOf(d) % clrs.length] : clrs[i%clrs.length];
+        var init = (p.initials || (p.name||'').split(' ').map(function(x){return x[0];}).join('')).slice(0,2).toUpperCase();
+        var ago = timeAgo(p.updatedAt);
+        return '<div class="card" style="margin-bottom:9px">'+
+          '<div style="display:flex;align-items:center;gap:11px">'+
+          '<div style="width:40px;height:40px;background:'+clr+';border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0">'+init+'</div>'+
+          '<div style="flex:1">'+
+            '<div style="font-size:14px;font-weight:700">'+(p.name||p.email)+'</div>'+
+            '<div style="font-size:12px;color:var(--t2);margin-top:2px">'+
+              '📍 '+p.lat.toFixed(5)+', '+p.lng.toFixed(5)+
+            '</div>'+
+            '<div style="font-size:11px;color:var(--t3);margin-top:2px">Mis à jour '+ago+'</div>'+
+          '</div>'+
+          '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">'+
+            '<span style="font-size:10px;padding:3px 8px;border-radius:20px;background:rgba(34,197,94,.15);color:var(--green);font-weight:700">● Live</span>'+
+            '<a href="https://maps.google.com/?q='+p.lat+','+p.lng+'" target="_blank" style="font-size:10px;color:var(--blue);text-decoration:none;background:rgba(59,130,246,.1);padding:3px 8px;border-radius:20px;font-weight:600">🗺 Maps</a>'+
+          '</div>'+
+          '</div></div>';
+      }).join('');
+    }
+
+    if (inactive.length) {
+      html += '<div class="sec">Hors ligne ('+inactive.length+')</div>';
+      html += inactive.map(function(p, i) {
+        var init = (p.initials || (p.name||'').split(' ').map(function(x){return x[0];}).join('')).slice(0,2).toUpperCase();
+        var ago = timeAgo(p.updatedAt);
+        return '<div class="card" style="margin-bottom:9px;opacity:.6">'+
+          '<div style="display:flex;align-items:center;gap:11px">'+
+          '<div style="width:40px;height:40px;background:var(--card2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--t2);flex-shrink:0">'+init+'</div>'+
+          '<div style="flex:1">'+
+            '<div style="font-size:14px;font-weight:700">'+(p.name||p.email)+'</div>'+
+            '<div style="font-size:11px;color:var(--t3);margin-top:2px">Dernière position : '+ago+'</div>'+
+          '</div>'+
+          '<span style="font-size:10px;padding:3px 8px;border-radius:20px;background:var(--card2);color:var(--t3);font-weight:700">○ Hors ligne</span>'+
+          '</div></div>';
+      }).join('');
+    }
+
+    list.innerHTML = html;
+  }, function(err) {
+    list.innerHTML = '<div class="iinfo">⚠️ Erreur de connexion GPS : '+err.message+'</div>';
+  });
+}
+
+function timeAgo(isoStr) {
+  if (!isoStr) return 'inconnu';
+  var diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
+  if (diff < 60)  return 'il y a ' + diff + 's';
+  if (diff < 3600) return 'il y a ' + Math.floor(diff/60) + 'min';
+  return 'il y a ' + Math.floor(diff/3600) + 'h';
+}
+
+/* ── SYNC LIVREURS depuis Firebase (admin) ── */
+function syncDriversFromFirebase() {
+  if (!fbReady) return;
+  db.collection('config').doc('drivers').get().then(function(doc) {
+    if (doc.exists && doc.data().list) {
+      var list = doc.data().list;
+      localStorage.setItem('cl_drivers', JSON.stringify(list));
+    }
+  }).catch(function(){});
+}
+
+/* ── AUTO-REFRESH dashboard ── */
+var dashRefreshInterval = null;
+
+function startDashAutoRefresh() {
+  if (dashRefreshInterval) clearInterval(dashRefreshInterval);
+  dashRefreshInterval = setInterval(function() {
+    /* Rafraîchir seulement si l'onglet dash est visible */
+    var dash = document.getElementById('atab-dash');
+    if (dash && dash.classList.contains('on')) {
+      loadReportsFromFirebase(function(reps) {
+        /* Mise à jour silencieuse */
+        var today = new Date().toISOString().split('T')[0];
+        var todayR = reps.filter(function(r){ return r.date===today; });
+        var totC = todayR.reduce(function(s,r){return s+(r.packagesDelivered||0)+(r.packagesPickup||0);},0);
+        var totKm= todayR.reduce(function(s,r){return s+(r.kmTotal||0);},0);
+        var totE = todayR.reduce(function(s,r){return s+(r.expenses||[]).reduce(function(a,e){return a+e.amount;},0);},0);
+        var drivers = getDrivers();
+        var active = drivers.filter(function(d){return d.active;}).length;
+        var gs = document.getElementById('adminStats');
+        if(gs) gs.innerHTML =
+          '<div class="sbox"><div class="sbox-lbl">Livreurs actifs</div><div class="sbox-val" style="color:var(--ac)">'+active+'</div><div class="sbox-unit">sur '+drivers.length+'</div></div>'+
+          '<div class="sbox"><div class="sbox-lbl">Colis aujourd\'hui</div><div class="sbox-val" style="color:var(--blue)">'+totC+'</div><div class="sbox-unit">livrés+ramassés</div></div>'+
+          '<div class="sbox"><div class="sbox-lbl">Km aujourd\'hui</div><div class="sbox-val" style="color:var(--green)">'+totKm+'</div><div class="sbox-unit">kilomètres</div></div>'+
+          '<div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" style="color:var(--yellow)">'+totE+'€</div><div class="sbox-unit">aujourd\'hui</div></div>';
+      });
+    }
+  }, 60000); /* Toutes les 60 secondes */
+}
+
+function stopDashAutoRefresh() {
+  if (dashRefreshInterval) { clearInterval(dashRefreshInterval); dashRefreshInterval = null; }
+  if (gpsUnsubscribe) { gpsUnsubscribe(); gpsUnsubscribe = null; }
+}
+
+/* ── ADMIN DASH ── */
+function renderAdminDash() {
+  var drivers = getDrivers();
+  var active  = drivers.filter(function(d){return d.active;}).length;
+
+  /* Afficher stats depuis cache local immédiatement */
+  function renderStats(reps) {
+    var today   = new Date().toISOString().split('T')[0];
+    var todayR  = reps.filter(function(r){return r.date===today;});
+    var totC  = todayR.reduce(function(s,r){return s+(r.packagesDelivered||0)+(r.packagesPickup||0);},0);
+    var totKm = todayR.reduce(function(s,r){return s+(r.kmTotal||0);},0);
+    var totE  = todayR.reduce(function(s,r){return s+(r.expenses||[]).reduce(function(a,e){return a+e.amount;},0);},0);
+
+    var gs = document.getElementById('adminStats');
+    if(gs) gs.innerHTML =
+      '<div class="sbox"><div class="sbox-lbl">Livreurs actifs</div><div class="sbox-val" style="color:var(--ac)">'+active+'</div><div class="sbox-unit">sur '+drivers.length+'</div></div>'+
+      '<div class="sbox"><div class="sbox-lbl">Colis aujourd\'hui</div><div class="sbox-val" style="color:var(--blue)">'+totC+'</div><div class="sbox-unit">livrés+ramassés</div></div>'+
+      '<div class="sbox"><div class="sbox-lbl">Km aujourd\'hui</div><div class="sbox-val" style="color:var(--green)">'+totKm+'</div><div class="sbox-unit">kilomètres</div></div>'+
+      '<div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" style="color:var(--yellow)">'+totE+'€</div><div class="sbox-unit">aujourd\'hui</div></div>';
+
+    var clrs=['#f97316','#3b82f6','#22c55e','#a855f7','#f59e0b'];
+    var cont = document.getElementById('adminDriversDay');
+    var actD = drivers.filter(function(d){return d.active;});
+    if (!actD.length) { if(cont) cont.innerHTML='<div class="card" style="color:var(--t3);text-align:center;padding:16px">Aucun livreur actif</div>'; return; }
+    if(cont) cont.innerHTML = actD.map(function(d,i){
+      var rep = todayR.find(function(r){return r.driverEmail===d.email;})||null;
+      var init=(d.initials||(d.name||'').split(' ').map(function(x){return x[0];}).join('')).slice(0,2).toUpperCase();
+      return '<div class="card" style="margin-bottom:9px"><div style="display:flex;align-items:center;gap:10px">'+
+        '<div style="width:36px;height:36px;background:'+clrs[i%clrs.length]+';border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0">'+init+'</div>'+
+        '<div style="flex:1"><div style="font-size:14px;font-weight:700">'+d.name+'</div>'+
+        (rep?'<div style="font-size:12px;color:var(--t2)">'+((rep.packagesDelivered||0)+(rep.packagesPickup||0))+' colis · '+(rep.kmTotal||0)+' km · '+(rep.expenses||[]).reduce(function(s,e){return s+e.amount;},0)+'€</div>'
+            :'<div style="font-size:12px;color:var(--t3)">Pas encore commencé</div>')+
+        '</div><div style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;'+(rep?'background:rgba(34,197,94,.15);color:var(--green)':'background:rgba(74,85,104,.2);color:var(--t3)')+'">'+
+        (rep?'● En cours':'○')+'</div></div></div>';
+    }).join('');
+  }
+
+  /* Charger depuis Firebase pour avoir les données fraîches */
+  renderStats(getAllReports()); /* Immédiat depuis cache */
+  loadReportsFromFirebase(function(reps) { renderStats(reps); }); /* Puis mise à jour */
+}
+
+/* ── ADMIN DRIVERS ── */
+function renderAdminDrivers() {
+  var drivers=getDrivers(), list=document.getElementById('adminDriversList');
+  if(!list) return;
+  if(!drivers.length){list.innerHTML='<div style="text-align:center;padding:32px 20px;color:var(--t3)"><div style="font-size:32px;margin-bottom:9px">👤</div><div style="font-size:15px;color:var(--t2);font-weight:600">Aucun livreur</div></div>';return;}
+  var clrs=['#f97316','#3b82f6','#22c55e','#a855f7','#f59e0b','#ef4444'];
+  list.innerHTML=drivers.map(function(d,i){
+    var init=(d.initials||(d.name||'').split(' ').map(function(x){return x[0];}).join('')).slice(0,2).toUpperCase();
+    return '<div style="background:var(--card);border:1px solid var(--b1);border-radius:15px;padding:14px;margin-bottom:10px">'+
+      '<div style="display:flex;align-items:center;gap:11px;margin-bottom:11px">'+
+      '<div style="width:42px;height:42px;background:'+clrs[i%clrs.length]+';border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">'+init+'</div>'+
+      '<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+d.name+'</div>'+
+      '<div style="font-size:11px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+d.email+'</div></div>'+
+      '<div style="padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;flex-shrink:0;'+(d.active?'background:rgba(34,197,94,.15);color:var(--green)':'background:rgba(239,68,68,.15);color:var(--red)')+'">'+
+      (d.active?'● Actif':'● Inactif')+'</div></div>'+
+      '<div style="background:var(--card2);border:1px solid var(--b2);border-radius:10px;padding:10px;margin-bottom:10px">'+
+      '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Identifiants</div>'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--t2)">Email</span><span style="font-size:12px;font-weight:600;color:var(--t1);max-width:62%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+d.email+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--t2)">Mot de passe</span><span style="font-size:12px;font-weight:600;color:var(--ac)">'+d.password+'</span></div></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'+
+      '<button class="driverAction" style="background:var(--card2);border:1.5px solid var(--b2);border-radius:9px;padding:9px 4px;color:var(--t2);font-family:Outfit,sans-serif;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px" data-action="edit" data-email="'+d.email+'"><i class="fas fa-edit"></i> Modifier</button>'+
+      '<button class="driverAction" style="background:'+(d.active?'rgba(239,68,68,.1)':'rgba(34,197,94,.1)')+';border:1.5px solid '+(d.active?'rgba(239,68,68,.3)':'rgba(34,197,94,.3)')+';border-radius:9px;padding:9px 4px;color:'+(d.active?'var(--red)':'var(--green)')+';font-family:Outfit,sans-serif;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px" data-action="toggle" data-email="'+d.email+'"><i class="fas fa-'+(d.active?'ban':'check')+'"></i> '+(d.active?'Désact.':'Activer')+'</button>'+
+      '<button class="driverAction" style="background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.25);border-radius:9px;padding:9px 4px;color:var(--red);font-family:Outfit,sans-serif;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px" data-action="delete" data-email="'+d.email+'"><i class="fas fa-trash"></i> Supp.</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+/* ── ADMIN REPORTS ── */
+function getAllReports() {
+  var reps=[]; var drivers=getDrivers();
+  drivers.forEach(function(d){
+    try{
+      var s=localStorage.getItem('cl_reports_'+d.email);
+      if(s) JSON.parse(s).forEach(function(r){reps.push(Object.assign({},r,{driverName:d.name,driverEmail:d.email}));});
+    }catch(e){}
+  });
+  return reps;
+}
+
+function renderAdminReports() {
+  var list = document.getElementById('adminReportsList');
+  if(!list) return;
+  list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--t2)"><i class="fas fa-spinner fa-spin" style="font-size:24px;margin-bottom:8px;display:block"></i>Chargement des rapports…</div>';
+
+  loadReportsFromFirebase(function(reps) {
+    if(!reps.length){
+      list.innerHTML='<div style="text-align:center;padding:32px 20px;color:var(--t3)"><div style="font-size:32px;margin-bottom:9px">📋</div><div style="font-size:15px;color:var(--t2);font-weight:600">Aucun rapport</div><div style="font-size:12px;margin-top:4px">Les rapports apparaissent quand les livreurs terminent leur journée</div></div>';
+      return;
+    }
+    var byDate={};
+    reps.forEach(function(r){if(!byDate[r.date])byDate[r.date]=[];byDate[r.date].push(r);});
+    list.innerHTML=Object.keys(byDate).sort().reverse().map(function(date){
+      var lbl=new Date(date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      return '<div style="margin-bottom:14px"><div class="sec">'+lbl+'</div>'+
+        byDate[date].map(function(r){
+          var totE=(r.expenses||[]).reduce(function(s,e){return s+e.amount;},0);
+          var totC=(r.packagesDelivered||0)+(r.packagesPickup||0);
+          var totS=(r.stopsDelivered||0)+(r.stopsPickup||0);
+
+          var photosHtml = '<div style="margin-top:10px"><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">Photos fin de journée</div>'+
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+          if(r.photoScan){
+            photosHtml+='<div><div style="font-size:10px;color:var(--t3);margin-bottom:4px">📄 Rapport scanner</div>'+
+              '<img src="'+r.photoScan+'" style="width:100%;border-radius:8px;cursor:pointer" onclick="viewFullPhoto(this.src)"></div>';
+          } else {
+            photosHtml+='<div style="background:var(--card2);border-radius:8px;padding:14px;text-align:center;font-size:11px;color:var(--t3)">📄 Pas de photo</div>';
+          }
+          if(r.photoOdo){
+            photosHtml+='<div><div style="font-size:10px;color:var(--t3);margin-bottom:4px">🚗 Kilométrage</div>'+
+              '<img src="'+r.photoOdo+'" style="width:100%;border-radius:8px;cursor:pointer" onclick="viewFullPhoto(this.src)"></div>';
+          } else {
+            photosHtml+='<div style="background:var(--card2);border-radius:8px;padding:14px;text-align:center;font-size:11px;color:var(--t3)">🚗 Pas de photo</div>';
+          }
+          photosHtml+='</div></div>';
+
+          var recusHtml = '';
+          if(r.expenses && r.expenses.length) {
+            var withPhoto = r.expenses.filter(function(e){return e.photo;});
+            if(withPhoto.length) {
+              recusHtml = '<div style="margin-top:10px"><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">Reçus dépenses ('+withPhoto.length+')</div>'+
+                '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">';
+              withPhoto.forEach(function(e){
+                recusHtml+='<div><div style="font-size:9px;color:var(--t3);margin-bottom:3px">'+e.type+' '+e.amount+'€</div>'+
+                  '<img src="'+e.photo+'" style="width:100%;border-radius:6px;cursor:pointer" onclick="viewFullPhoto(this.src)"></div>';
+              });
+              recusHtml+='</div></div>';
+            }
+          }
+
+          return '<div class="card" style="margin-bottom:9px">'+
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
+            '<div style="font-size:15px;font-weight:700">'+(r.driverName||r.driverEmail)+'</div>'+
+            '<span style="font-size:10px;padding:3px 8px;border-radius:20px;background:rgba(34,197,94,.15);color:var(--green);font-weight:700">✅ Terminé</span></div>'+
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'+
+            '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Km parcourus</div><div style="font-size:16px;font-weight:800;color:var(--ac)">'+(r.kmTotal||0)+'</div></div>'+
+            '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Total colis</div><div style="font-size:16px;font-weight:800;color:var(--blue)">'+totC+'</div></div>'+
+            '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Dépenses</div><div style="font-size:16px;font-weight:800;color:var(--yellow)">'+totE+'€</div></div>'+
+            '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Total stops</div><div style="font-size:16px;font-weight:800;color:var(--green)">'+totS+'</div></div>'+
+            '</div>'+
+            (r.exceptions?'<div style="margin-top:8px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:9px;padding:8px;font-size:12px;color:var(--yellow)">⚠️ '+r.exceptions+'</div>':'')+
+            photosHtml + recusHtml +
+            '</div>';
+        }).join('')+'</div>';
+    }).join('');
+  });
+}
+
+/* Voir photo en plein écran */
+function viewFullPhoto(src) {
+  var overlay = document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML='<img src="'+src+'" style="max-width:100%;max-height:100%;border-radius:8px;object-fit:contain">'+
+    '<div style="position:absolute;top:16px;right:16px;width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;color:#fff">✕</div>';
+  overlay.addEventListener('click', function(){ document.body.removeChild(overlay); });
+  document.body.appendChild(overlay);
+}
+
+/* ══════════════════════════════════════════════
+   EXPORT — CSV (UTF-8 BOM, ouvre dans Excel)
+══════════════════════════════════════════════ */
+function buildExportData() {
+  var drivers = getDrivers();
+  var allReps = getAllReports();
+  return { drivers: drivers, reports: allReps };
+}
+
+function exportCSV() {
+  var data = buildExportData();
+  var drivers = data.drivers;
+  var allReps = data.reports;
+  var BOM = '\uFEFF';
+  var lines = [];
+  var sep = ',';
+  function q(v) { return '"' + String(v||'').replace(/"/g,'""') + '"'; }
+
+  /* === RÉSUMÉ GLOBAL === */
+  lines.push(q('=== RÉSUMÉ GLOBAL ==='));
+  lines.push('');
+  lines.push([q('Livreur'),q('Total Km'),q('Stops Livrés'),q('Colis Livrés'),q('Stops Ramassés'),q('Colis Ramassés'),q('Total Stops'),q('Total Colis'),q('Dépenses (€)')].join(sep));
+
+  var grandTotals = {km:0,stD:0,pkD:0,stP:0,pkP:0,exp:0};
+
+  drivers.forEach(function(d) {
+    var dReps = allReps.filter(function(r){return r.driverEmail===d.email;});
+    var km  = dReps.reduce(function(s,r){return s+(r.kmTotal||0);},0);
+    var stD = dReps.reduce(function(s,r){return s+(r.stopsDelivered||0);},0);
+    var pkD = dReps.reduce(function(s,r){return s+(r.packagesDelivered||0);},0);
+    var stP = dReps.reduce(function(s,r){return s+(r.stopsPickup||0);},0);
+    var pkP = dReps.reduce(function(s,r){return s+(r.packagesPickup||0);},0);
+    var exp = dReps.reduce(function(s,r){return s+(r.expenses||[]).reduce(function(a,e){return a+e.amount;},0);},0);
+    grandTotals.km+=km; grandTotals.stD+=stD; grandTotals.pkD+=pkD;
+    grandTotals.stP+=stP; grandTotals.pkP+=pkP; grandTotals.exp+=exp;
+    lines.push([q(d.name),km,stD,pkD,stP,pkP,(stD+stP),(pkD+pkP),exp].join(sep));
+  });
+  lines.push([q('TOTAL GÉNÉRAL'),grandTotals.km,grandTotals.stD,grandTotals.pkD,grandTotals.stP,grandTotals.pkP,(grandTotals.stD+grandTotals.stP),(grandTotals.pkD+grandTotals.pkP),grandTotals.exp].join(sep));
+
+  /* === DÉTAIL PAR LIVREUR === */
+  var COLS = [q('Date'),q('Km Départ'),q('Km Fin'),q('Km Total'),q('Stops Livrés'),q('Colis Livrés'),q('Stops Ramassés'),q('Colis Ramassés'),q('Total Stops'),q('Total Colis'),q('Dépenses (€)'),q('Exceptions'),q('Photo Scanner'),q('Photo Km')];
+
+  drivers.forEach(function(d) {
+    var dReps = allReps.filter(function(r){return r.driverEmail===d.email;});
+    if (!dReps.length) return;
+    lines.push('');
+    lines.push(q('=== ' + d.name.toUpperCase() + ' ==='));
+    lines.push(COLS.join(sep));
+
+    var tot = {km:0,stD:0,pkD:0,stP:0,pkP:0,exp:0};
+    dReps.forEach(function(r) {
+      var exp = (r.expenses||[]).reduce(function(s,e){return s+e.amount;},0);
+      tot.km+=r.kmTotal||0; tot.stD+=r.stopsDelivered||0; tot.pkD+=r.packagesDelivered||0;
+      tot.stP+=r.stopsPickup||0; tot.pkP+=r.packagesPickup||0; tot.exp+=exp;
+      lines.push([
+        q(r.date), r.kmStart||0, r.kmEnd||0, r.kmTotal||0,
+        r.stopsDelivered||0, r.packagesDelivered||0,
+        r.stopsPickup||0, r.packagesPickup||0,
+        (r.stopsDelivered||0)+(r.stopsPickup||0),
+        (r.packagesDelivered||0)+(r.packagesPickup||0),
+        exp, q(r.exceptions||'—'),
+        q(r.photoScan ? '✅ Photo présente' : '❌ Manquante'),
+        q(r.photoOdo  ? '✅ Photo présente' : '❌ Manquante')
+      ].join(sep));
+    });
+    lines.push([q('TOTAL'),'—','—',tot.km,tot.stD,tot.pkD,tot.stP,tot.pkP,(tot.stD+tot.stP),(tot.pkD+tot.pkP),tot.exp,q(''),q(''),q('')].join(sep));
+  });
+
+  var csv = BOM + lines.join('\n');
+  downloadBlob(csv, 'CarLogistique_Rapport_'+today()+'.csv', 'text/csv;charset=utf-8;');
+  toast('✅ CSV téléchargé', 'success');
+}
+
+/* ══════════════════════════════════════════════
+   EXPORT — XLSX avec vraies photos (ExcelJS)
+══════════════════════════════════════════════ */
+function exportXLSX() {
+  var btn = document.getElementById('btnExportXLSX');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:18px"></i><span style="font-size:12px;margin-top:2px">Génération…</span>';
+  }
+  toast('Préparation du fichier Excel avec photos…', 'success');
+
+  function resetBtn() {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-file-excel" style="font-size:22px"></i><span style="font-size:13px;font-weight:700">XLSX</span><span style="font-size:10px;opacity:.8">Tableau coloré</span>';
+    }
+  }
+
+  function doExport() {
+    var data = buildExportData();
+    buildExcelJS(data.drivers, data.reports, resetBtn);
+  }
+
+  if (typeof ExcelJS === 'undefined') {
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
+    s.onload = doExport;
+    s.onerror = function() {
+      toast('Erreur réseau — vérifiez votre connexion internet', 'error');
+      resetBtn();
+    };
+    document.head.appendChild(s);
+  } else {
+    doExport();
+  }
+}
+
+/* Convertir base64 dataUrl en ArrayBuffer pour ExcelJS */
+function dataUrlToBuffer(dataUrl) {
+  if (!dataUrl || !dataUrl.startsWith('data:')) return null;
+  try {
+    var base64 = dataUrl.split(',')[1];
+    var bin = atob(base64);
+    var buf = new ArrayBuffer(bin.length);
+    var arr = new Uint8Array(buf);
+    for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return buf;
+  } catch(e) { return null; }
+}
+
+function buildExcelJS(drivers, allReps, onDone) {
+  var wb = new ExcelJS.Workbook();
+  wb.creator = 'Car Logistique';
+  wb.created = new Date();
+
+  /* ── Couleurs ── */
+  var CLR = {
+    orange:'FFF97316', orangeL:'FFFFF7ED',
+    blue:'FF2563EB',   blueL:'FFEFF6FF',
+    green:'FF16A34A',  greenL:'FFF0FDF4',
+    yellow:'FFD97706', yellowL:'FFFEFCE8',
+    purple:'FF7C3AED', purpleL:'FFF5F3FF',
+    red:'FFDC2626',
+    dark:'FF0F172A',   dark2:'FF1E293B',
+    white:'FFFFFFFF',  grayL:'FFF8FAFC',
+  };
+
+  function hdrFill(argb) { return { type:'pattern', pattern:'solid', fgColor:{argb:argb} }; }
+  function font(argb, bold, sz) { return { color:{argb:argb}, bold:!!bold, size:sz||10, name:'Calibri' }; }
+  function align(h, v) { return { horizontal:h||'left', vertical:v||'center', wrapText:false }; }
+  function border() {
+    var s = {style:'thin', color:{argb:'FFD1D5DB'}};
+    return {top:s, bottom:s, left:s, right:s};
+  }
+
+  function styleHdr(cell, bgArgb) {
+    cell.fill = hdrFill(bgArgb);
+    cell.font = font(CLR.white, true, 10);
+    cell.alignment = align('center','center');
+    cell.border = border();
+  }
+
+  function styleData(cell, bgArgb, fgArgb, bold, halign) {
+    cell.fill = hdrFill(bgArgb || CLR.white);
+    cell.font = font(fgArgb || CLR.dark, bold, 10);
+    cell.alignment = align(halign||'left', 'center');
+    cell.border = border();
+  }
+
+  function styleTotals(cell, bgArgb, fgArgb) {
+    cell.fill = hdrFill(bgArgb);
+    cell.font = font(fgArgb||CLR.white, true, 10);
+    cell.alignment = align('center','center');
+    cell.border = border();
+  }
+
+  /* ════ FEUILLE 1 : RÉSUMÉ GLOBAL ════ */
+  var ws0 = wb.addWorksheet('Resume Global');
+  ws0.properties.defaultRowHeight = 20;
+
+  /* Titre */
+  ws0.mergeCells('A1:I1');
+  var t0 = ws0.getCell('A1');
+  t0.value = 'CAR LOGISTIQUE — RÉSUMÉ GLOBAL';
+  t0.fill = hdrFill(CLR.dark); t0.font = font(CLR.orange, true, 14);
+  t0.alignment = align('center','center');
+  ws0.getRow(1).height = 28;
+
+  ws0.mergeCells('A2:I2');
+  var t1 = ws0.getCell('A2');
+  t1.value = 'Généré le ' + new Date().toLocaleDateString('fr-FR');
+  t1.fill = hdrFill(CLR.dark2); t1.font = font('FF94A3B8', false, 10);
+  t1.alignment = align('center','center');
+
+  /* En-têtes row 3 */
+  var h0 = ['Livreur','Total Km','Stops Livrés','Colis Livrés','Stops Ramassés','Colis Ramassés','Total Stops','Total Colis','Dépenses (€)'];
+  var hBg0 = [CLR.dark2,CLR.blue,CLR.green,CLR.green,CLR.purple,CLR.purple,CLR.blue,CLR.orange,CLR.yellow];
+  var r3 = ws0.getRow(3);
+  h0.forEach(function(h,i){ var c=r3.getCell(i+1); c.value=h; styleHdr(c, hBg0[i]); });
+  r3.height = 20;
+
+  var grand = {km:0,stD:0,pkD:0,stP:0,pkP:0,exp:0};
+  var rowIdx = 4;
+
+  drivers.forEach(function(d, di) {
+    var dReps = allReps.filter(function(x){return x.driverEmail===d.email;});
+    var km  = dReps.reduce(function(s,x){return s+(x.kmTotal||0);},0);
+    var stD = dReps.reduce(function(s,x){return s+(x.stopsDelivered||0);},0);
+    var pkD = dReps.reduce(function(s,x){return s+(x.packagesDelivered||0);},0);
+    var stP = dReps.reduce(function(s,x){return s+(x.stopsPickup||0);},0);
+    var pkP = dReps.reduce(function(s,x){return s+(x.packagesPickup||0);},0);
+    var exp = dReps.reduce(function(s,x){return s+(x.expenses||[]).reduce(function(a,e){return a+e.amount;},0);},0);
+    grand.km+=km; grand.stD+=stD; grand.pkD+=pkD; grand.stP+=stP; grand.pkP+=pkP; grand.exp+=exp;
+    var bg = di%2===0 ? CLR.white : CLR.grayL;
+    var row = ws0.getRow(rowIdx++);
+    row.height = 18;
+    var vals = [d.name, km, stD, pkD, stP, pkP, stD+stP, pkD+pkP, exp];
+    var fgs  = [CLR.dark, CLR.blue, CLR.green, CLR.green, CLR.purple, CLR.purple, CLR.blue, CLR.orange, CLR.yellow];
+    vals.forEach(function(v,i){
+      var c = row.getCell(i+1);
+      c.value = v;
+      styleData(c, bg, fgs[i], i===0, i===0?'left':'center');
+    });
+  });
+
+  var totRow = ws0.getRow(rowIdx);
+  totRow.height = 20;
+  [['TOTAL GÉNÉRAL',CLR.dark],
+   [grand.km,CLR.dark],[grand.stD,CLR.dark],[grand.pkD,CLR.dark],
+   [grand.stP,CLR.dark],[grand.pkP,CLR.dark],
+   [grand.stD+grand.stP,CLR.orange],[grand.pkD+grand.pkP,CLR.orange],
+   [grand.exp,CLR.yellow]
+  ].forEach(function(pair,i){
+    var c = totRow.getCell(i+1);
+    c.value = pair[0];
+    styleTotals(c, pair[1], i===8 ? CLR.dark : CLR.white);
+    if(i===0) c.alignment = align('left','center');
+  });
+
+  ws0.columns = [28,12,13,13,15,15,12,12,13].map(function(w){ return {width:w}; });
+
+  /* ════ FEUILLES PAR LIVREUR ════ */
+  var accentClrs = [CLR.orange,CLR.blue,CLR.green,CLR.purple,CLR.yellow];
+  var lightClrs  = [CLR.orangeL,CLR.blueL,CLR.greenL,CLR.purpleL,CLR.yellowL];
+
+  drivers.forEach(function(d, di) {
+    var dReps = allReps.filter(function(x){return x.driverEmail===d.email;});
+    if (!dReps.length) return;
+    var ac = accentClrs[di % accentClrs.length];
+    var lc = lightClrs[di % lightClrs.length];
+    var shName = d.name.replace(/[:\\\/\?\*\[\]]/g,'').substring(0,31);
+    var ws = wb.addWorksheet(shName);
+    ws.properties.defaultRowHeight = 18;
+
+    /* Titre */
+    ws.mergeCells(1,1,1,12);
+    var tc = ws.getCell(1,1);
+    tc.value = '🚚 ' + d.name.toUpperCase() + ' — RAPPORT DE LIVRAISON';
+    tc.fill = hdrFill(CLR.dark); tc.font = font(ac, true, 12);
+    tc.alignment = align('center','center');
+    ws.getRow(1).height = 26;
+
+    /* Info */
+    ws.mergeCells(2,1,2,12);
+    var ic = ws.getCell(2,1);
+    ic.value = 'Email : ' + d.email;
+    ic.fill = hdrFill(CLR.dark2); ic.font = font('FF94A3B8', false, 10);
+    ic.alignment = align('center','center');
+
+    /* En-têtes */
+    var cols = ['Date','Km Départ','Km Fin','Km Total','Stops Livrés','Colis Livrés','Stops Ramassés','Colis Ramassés','Total Stops','Total Colis','Dépenses (€)','Exceptions'];
+    var cbg  = [CLR.dark2,ac,ac,ac,CLR.green,CLR.green,CLR.purple,CLR.purple,CLR.blue,CLR.orange,CLR.yellow,CLR.dark2];
+    var hRow = ws.getRow(3);
+    hRow.height = 20;
+    cols.forEach(function(h,i){ var c=hRow.getCell(i+1); c.value=h; styleHdr(c,cbg[i]); });
+
+    var tot2 = {km:0,stD:0,pkD:0,stP:0,pkP:0,exp:0};
+    var rIdx = 4;
+
+    dReps.forEach(function(rep, ri) {
+      var bg  = ri%2===0 ? CLR.white : lc;
+      var exp = (rep.expenses||[]).reduce(function(s,e){return s+e.amount;},0);
+      tot2.km+=rep.kmTotal||0; tot2.stD+=rep.stopsDelivered||0; tot2.pkD+=rep.packagesDelivered||0;
+      tot2.stP+=rep.stopsPickup||0; tot2.pkP+=rep.packagesPickup||0; tot2.exp+=exp;
+
+      var dataRow = ws.getRow(rIdx);
+      dataRow.height = 18;
+      var vals = [rep.date, rep.kmStart||0, rep.kmEnd||0, rep.kmTotal||0,
+        rep.stopsDelivered||0, rep.packagesDelivered||0,
+        rep.stopsPickup||0, rep.packagesPickup||0,
+        (rep.stopsDelivered||0)+(rep.stopsPickup||0),
+        (rep.packagesDelivered||0)+(rep.packagesPickup||0),
+        exp, rep.exceptions||'—'];
+      var dfgs = [CLR.dark,CLR.dark,CLR.dark,ac,CLR.green,CLR.green,CLR.purple,CLR.purple,CLR.blue,CLR.orange,CLR.yellow,CLR.dark];
+      var bolds= [true,false,false,true,false,true,false,true,true,true,true,false];
+      vals.forEach(function(v,i){
+        var c = dataRow.getCell(i+1);
+        c.value = v;
+        styleData(c, bg, dfgs[i], bolds[i], i===0?'left':'center');
+      });
+      rIdx++;
+    });
+
+    /* Totaux */
+    var tRow = ws.getRow(rIdx);
+    tRow.height = 20;
+    [['TOTAL',ac],['—',ac],['—',ac],
+     [tot2.km,ac],[tot2.stD,ac],[tot2.pkD,ac],[tot2.stP,ac],[tot2.pkP,ac],
+     [tot2.stD+tot2.stP,CLR.blue],[tot2.pkD+tot2.pkP,CLR.orange],
+     [tot2.exp,CLR.yellow],['' ,ac]
+    ].forEach(function(pair,i){
+      var c = tRow.getCell(i+1);
+      c.value = pair[0];
+      styleTotals(c, pair[1], i===10 ? CLR.dark : CLR.white);
+      if(i===0) c.alignment = align('left','center');
+    });
+
+    ws.columns = [12,11,11,10,13,13,15,15,11,11,13,22].map(function(w){ return {width:w}; });
+
+    /* ── Feuille photos séparée pour ce livreur ── */
+    var hasPhotos = dReps.some(function(r){ return r.photoScan || r.photoOdo || (r.expenses||[]).some(function(e){return e.photo;}); });
+    if (hasPhotos) {
+      var wsPh = wb.addWorksheet(shName.substring(0,25) + ' Photos');
+      wsPh.properties.defaultRowHeight = 100;
+
+      /* En-tête */
+      wsPh.mergeCells('A1:D1');
+      var phTc = wsPh.getCell('A1');
+      phTc.value = '📸 PHOTOS — ' + d.name.toUpperCase();
+      phTc.fill = hdrFill(CLR.dark); phTc.font = font(ac, true, 12);
+      phTc.alignment = align('center','center');
+      wsPh.getRow(1).height = 26;
+
+      var phRow = ws0.getRow ? wsPh.getRow(2) : null;
+      var phHdrs = ['Date','Type','Info','Photo'];
+      var phHdrRow = wsPh.getRow(2);
+      phHdrRow.height = 20;
+      phHdrs.forEach(function(h,i){
+        var c = phHdrRow.getCell(i+1);
+        c.value = h;
+        styleHdr(c, [CLR.dark2,CLR.dark2,CLR.dark2,ac][i]);
+      });
+
+      var phIdx = 3;
+      dReps.forEach(function(rep) {
+        /* Photo scanner */
+        if (rep.photoScan && rep.photoScan.startsWith('data:')) {
+          var buf = dataUrlToBuffer(rep.photoScan);
+          if (buf) {
+            try {
+              var imgId = wb.addImage({ buffer: buf, extension: 'jpeg' });
+              var pr = wsPh.getRow(phIdx); pr.height = 120;
+              wsPh.getCell(phIdx, 1).value = rep.date;
+              styleData(wsPh.getCell(phIdx,1), CLR.white, CLR.dark, true, 'center');
+              wsPh.getCell(phIdx, 2).value = 'Rapport Scanner';
+              styleData(wsPh.getCell(phIdx,2), CLR.white, CLR.dark, false, 'center');
+              wsPh.getCell(phIdx, 3).value = 'Fin de journée';
+              styleData(wsPh.getCell(phIdx,3), CLR.white, CLR.dark, false, 'center');
+              wsPh.addImage(imgId, { tl:{col:3, row:phIdx-1}, br:{col:4, row:phIdx}, editAs:'oneCell' });
+              phIdx++;
+            } catch(e) {
+              var pr2 = wsPh.getRow(phIdx); pr2.height = 20;
+              wsPh.getCell(phIdx,1).value = rep.date;
+              wsPh.getCell(phIdx,2).value = 'Rapport Scanner';
+              wsPh.getCell(phIdx,3).value = 'Photo disponible (base64)';
+              wsPh.getCell(phIdx,4).value = 'Voir dans l\'application';
+              phIdx++;
+            }
+          }
+        }
+
+        /* Photo kilométrage */
+        if (rep.photoOdo && rep.photoOdo.startsWith('data:')) {
+          var buf2 = dataUrlToBuffer(rep.photoOdo);
+          if (buf2) {
+            try {
+              var imgId2 = wb.addImage({ buffer: buf2, extension: 'jpeg' });
+              var pr3 = wsPh.getRow(phIdx); pr3.height = 120;
+              wsPh.getCell(phIdx, 1).value = rep.date;
+              styleData(wsPh.getCell(phIdx,1), CLR.white, CLR.dark, true, 'center');
+              wsPh.getCell(phIdx, 2).value = 'Photo Kilométrage';
+              styleData(wsPh.getCell(phIdx,2), CLR.white, CLR.dark, false, 'center');
+              wsPh.getCell(phIdx, 3).value = 'Fin de journée';
+              styleData(wsPh.getCell(phIdx,3), CLR.white, CLR.dark, false, 'center');
+              wsPh.addImage(imgId2, { tl:{col:3, row:phIdx-1}, br:{col:4, row:phIdx}, editAs:'oneCell' });
+              phIdx++;
+            } catch(e) { phIdx++; }
+          }
+        }
+
+        /* Photos reçus dépenses */
+        (rep.expenses||[]).forEach(function(exp, ei) {
+          if (!exp.photo || !exp.photo.startsWith('data:')) return;
+          var buf3 = dataUrlToBuffer(exp.photo);
+          if (!buf3) return;
+          try {
+            var imgId3 = wb.addImage({ buffer: buf3, extension: 'jpeg' });
+            var pr4 = wsPh.getRow(phIdx); pr4.height = 120;
+            wsPh.getCell(phIdx,1).value = rep.date;
+            styleData(wsPh.getCell(phIdx,1), CLR.yellowL, CLR.dark, true, 'center');
+            wsPh.getCell(phIdx,2).value = 'Reçu — ' + (exp.type||'');
+            styleData(wsPh.getCell(phIdx,2), CLR.yellowL, CLR.dark, false, 'center');
+            wsPh.getCell(phIdx,3).value = (exp.amount||0) + ' €';
+            styleData(wsPh.getCell(phIdx,3), CLR.yellowL, CLR.yellow, true, 'center');
+            wsPh.addImage(imgId3, { tl:{col:3, row:phIdx-1}, br:{col:4, row:phIdx}, editAs:'oneCell' });
+            phIdx++;
+          } catch(e) { phIdx++; }
+        });
+      });
+
+      wsPh.columns = [{width:12},{width:20},{width:14},{width:28}];
+    }
+  });
+
+  /* Générer et télécharger */
+  wb.xlsx.writeBuffer().then(function(buffer) {
+    var blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url;
+    a.download = 'CarLogistique_Rapport_' + today() + '.xlsx';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+    toast('✅ Excel téléchargé avec photos intégrées !', 'success');
+    if (onDone) onDone();
+  }).catch(function(e) {
+    console.error('ExcelJS error:', e);
+    toast('Erreur génération Excel : ' + e.message, 'error');
+    if (onDone) onDone();
+  });
+}
+
+/* ── HELPERS ── */
+function today() {
+  return new Date().toLocaleDateString('fr-FR').replace(/\//g,'-');
+}
+
+function downloadBlob(content, filename, mime) {
+  var blob = new Blob([content], {type: mime});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+/* ── DRIVER FORM ── */
+function openDriverForm(email) {
+  editEmail = email || null;
+  if (email) {
+    var d=getDrivers().find(function(x){return x.email===email;}); if(!d) return;
+    document.getElementById('dfTitle').textContent='Modifier le livreur';
+    document.getElementById('dfSub').textContent='Modifier le compte de '+d.name;
+    document.getElementById('dfName').value=d.name;
+    document.getElementById('dfEmail').value=d.email;
+    document.getElementById('dfPass').value=d.password;
+  } else {
+    document.getElementById('dfTitle').textContent='Nouveau livreur';
+    document.getElementById('dfSub').textContent='Le livreur se connecte avec ces identifiants';
+    document.getElementById('dfName').value='';
+    document.getElementById('dfEmail').value='';
+    document.getElementById('dfPass').value='';
+  }
+  openModal('mDriverForm');
+}
+
+function saveDriverForm() {
+  var name=document.getElementById('dfName').value.trim();
+  var email=document.getElementById('dfEmail').value.trim();
+  var pass=document.getElementById('dfPass').value.trim();
+  if(!name){toast('Entrez le nom','error');return;}
+  if(!email){toast("Entrez l'email",'error');return;}
+  if(!pass){toast('Entrez un mot de passe','error');return;}
+  var drivers=getDrivers();
+  var init=name.split(' ').map(function(x){return x[0];}).join('').slice(0,2).toUpperCase();
+  if (editEmail) {
+    var idx=drivers.findIndex(function(d){return d.email===editEmail;});
+    if(idx!==-1){drivers[idx]=Object.assign({},drivers[idx],{name:name,email:email,password:pass,initials:init});saveDrivers(drivers);closeModal('mDriverForm');renderAdminDrivers();toast('✅ Compte de '+name+' modifié','success');}
+  } else {
+    if(drivers.find(function(d){return d.email.toLowerCase()===email.toLowerCase();})){toast('Email déjà utilisé','error');return;}
+    drivers.push({email:email,password:pass,name:name,initials:init,active:true});
+    saveDrivers(drivers);closeModal('mDriverForm');renderAdminDrivers();toast('✅ Compte créé pour '+name,'success');
+  }
+}
+
+function toggleDriver(email) {
+  var drivers=getDrivers(), idx=drivers.findIndex(function(d){return d.email===email;});
+  if(idx!==-1){drivers[idx].active=!drivers[idx].active;saveDrivers(drivers);renderAdminDrivers();toast(drivers[idx].active?'✅ Compte activé':'⛔ Compte désactivé','success');}
+}
+
+/* ── INIT ALL EVENT LISTENERS ── */
+window.addEventListener('DOMContentLoaded', function() {
+
+  /* --- INIT FIREBASE --- */
+  initFirebase();
+  try {
+    var s=localStorage.getItem('cl_session');
+    if(s){var sess=JSON.parse(s);currentUser=sess.user;if(sess.day)day=sess.day;
+      if(currentUser&&currentUser.role==='admin'){
+        show('scAdmin');
+        renderAdminDash();
+        syncDriversFromFirebase();
+        startDashAutoRefresh();
+      }
+      else if(currentUser){initDriverUI();show('scHome');}
+    }
+  } catch(e){ clearSession(); }
+
+  /* --- DATE --- */
+  var el = document.getElementById('startDate');
+  if(el) el.textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  /* --- PHOTO --- */
+  document.getElementById('photoInput').addEventListener('change', onPhotoSelected);
+
+  /* --- GPS --- */
+  startGPS();
+
+  /* --- LOGIN --- */
+  document.getElementById('loginBtn').addEventListener('click', doLogin);
+  document.getElementById('loginPass').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+  document.getElementById('loginEmail').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+
+  /* --- LOGOUT --- */
+  document.getElementById('btnLogout').addEventListener('click', doLogout);
+  document.getElementById('btnAdminLogout').addEventListener('click', doLogout);
+  document.getElementById('btnProfileLogout').addEventListener('click', doLogout);
+
+  /* --- DRIVER NAV (delegated) --- */
+  document.querySelectorAll('[data-tab]').forEach(function(nb){
+    nb.addEventListener('click', function(){
+      var tab = this.getAttribute('data-tab');
+      if(!day.started && (tab==='delivery'||tab==='expenses')){toast("Commencez d'abord votre journée",'error');return;}
+      var map={home:'scHome',delivery:'scDelivery',expenses:'scExpenses'};
+      if(map[tab]) show(map[tab]);
+    });
+  });
+
+  /* --- START DAY --- */
+  document.getElementById('btnStartDay').addEventListener('click', function(){ show('scStartDay'); });
+  document.getElementById('btnBackFromStart').addEventListener('click', function(){ show('scHome'); });
+  document.getElementById('btnConfirmStart').addEventListener('click', confirmStartDay);
+
+  /* --- END DAY --- */
+  document.getElementById('btnEndDay').addEventListener('click', function(){ updateEndUI(); show('scEndDay'); });
+  document.getElementById('btnBackFromEnd').addEventListener('click', function(){ show('scHome'); });
+  document.getElementById('btnFinish').addEventListener('click', function(){
+    var kmT=(day.kmEnd||0)-(day.kmStart||0), totC=(day.packagesDelivered||0)+(day.packagesPickup||0), totE=day.expenses.reduce(function(s,e){return s+e.amount;},0);
+    document.getElementById('cKm').textContent=kmT+' km';
+    document.getElementById('cColis').textContent=totC;
+    document.getElementById('cExp').textContent=totE+' €';
+    openModal('mConfirmEnd');
+  });
+  document.getElementById('btnCancelEnd').addEventListener('click', function(){ closeModal('mConfirmEnd'); });
+  document.getElementById('btnConfirmEndFinal').addEventListener('click', finalizeDay);
+  document.getElementById('btnCloseDone').addEventListener('click', function(){ closeModal('mDone'); resetDay(); });
+  document.getElementById('kmEndInput').addEventListener('input', function(){
+    var km=parseInt(this.value);
+    if(km&&day.kmStart&&km>day.kmStart){day.kmEnd=km;document.getElementById('kmTotalDisplay').textContent=(km-day.kmStart)+' km';document.getElementById('kmTotalCard').style.display='block';markCheck('chk-km','chk-km-l',true);}
+    else{document.getElementById('kmTotalCard').style.display='none';markCheck('chk-km','chk-km-l',false);}
+    checkFinish();
+  });
+  document.getElementById('pzoneScan').addEventListener('click', function(){ photoTarget='scan'; document.getElementById('photoInput').click(); });
+  document.getElementById('pzoneOdo').addEventListener('click',  function(){ photoTarget='odo';  document.getElementById('photoInput').click(); });
+
+  /* --- DELIVERY --- */
+  document.getElementById('btnSaveDelivery').addEventListener('click', saveDelivery);
+
+  /* --- COUNTERS (long press) --- */
+  document.querySelectorAll('.cbtn').forEach(function(btn){
+    var field = btn.getAttribute('data-field');
+    var dir   = parseInt(btn.getAttribute('data-dir'));
+    function start(e){ e.preventDefault(); changeCnt(field,dir); holdTimer=setTimeout(function(){holdInterval=setInterval(function(){changeCnt(field,dir);},80);},350); }
+    function stop(){ clearTimeout(holdTimer); clearInterval(holdInterval); holdTimer=null; holdInterval=null; }
+    btn.addEventListener('mousedown',  start);
+    btn.addEventListener('touchstart', start, {passive:false});
+    btn.addEventListener('mouseup',    stop);
+    btn.addEventListener('mouseleave', stop);
+    btn.addEventListener('touchend',   stop);
+    btn.addEventListener('touchcancel',stop);
+    btn.addEventListener('contextmenu',function(e){e.preventDefault();});
+  });
+
+  /* --- COUNTER contenteditable blur --- */
+  document.querySelectorAll('.cnum').forEach(function(el){
+    var field = el.getAttribute('data-field');
+    el.addEventListener('blur', function(){ var v=Math.max(0,parseInt(this.textContent)||0); day[field]=v; this.textContent=v; updateTotals(); saveSession(); });
+    el.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();this.blur();}});
+  });
+
+  /* --- EXPENSES --- */
+  document.getElementById('btnOpenAddExp').addEventListener('click', function(){
+    if(!day.started){toast("Commencez d'abord votre journée",'error');return;}
+    expPhotoData=null;
+    document.getElementById('expAmount').value='';
+    var z=document.getElementById('pzoneExp'); z.classList.remove('done');
+    z.innerHTML='<div style="font-size:26px">📷</div><div style="font-size:13px;font-weight:600;color:var(--t2)">Photographier le reçu</div><div style="font-size:11px;color:var(--t3)">Obligatoire · Compressée automatiquement</div>';
+    openModal('mAddExp');
+  });
+  document.getElementById('btnCancelExp').addEventListener('click', function(){ closeModal('mAddExp'); });
+  document.getElementById('pzoneExp').addEventListener('click', function(){ photoTarget='expense'; document.getElementById('photoInput').click(); });
+
+  /* expense type selection */
+  document.querySelectorAll('#expTypeGrid .tbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('#expTypeGrid .tbtn').forEach(function(b){b.classList.remove('sel');});
+      this.classList.add('sel');
+      expType = this.getAttribute('data-type');
+    });
+  });
+
+  document.getElementById('btnConfirmExp').addEventListener('click', function(){
+    var amount=parseFloat(document.getElementById('expAmount').value);
+    if(!amount||amount<=0){toast('Entrez un montant valide','error');return;}
+    if(!expPhotoData){toast('La photo du reçu est obligatoire','error');return;}
+    day.expenses.push({id:Date.now(),type:expType,amount:amount,photo:expPhotoData,time:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})});
+    saveSession(); renderExpenses(); refreshHome();
+    closeModal('mAddExp');
+    toast('✅ '+amount+'€ ('+expType+')','success');
+    addTL('Dépense : <strong>'+amount+'€</strong> ('+expType+')');
+  });
+
+  /* expense list delete (delegated) */
+  document.getElementById('expList').addEventListener('click', function(e){
+    var del = e.target.closest('.edel'); if(!del) return;
+    var id = parseInt(del.getAttribute('data-id'));
+    if(confirm('Supprimer cette dépense ?')){
+      day.expenses=day.expenses.filter(function(x){return x.id!==id;});
+      saveSession(); renderExpenses(); refreshHome();
+      toast('Dépense supprimée','success');
+    }
+  });
+
+  /* --- EXPORT BUTTONS --- */
+  document.getElementById('btnExportCSV').addEventListener('click', exportCSV);
+  document.getElementById('btnExportXLSX').addEventListener('click', exportXLSX);
+
+  /* --- ADMIN NAV --- */
+  var ATITLES = {
+    dash:'Tableau de bord', gps:'GPS en direct',
+    drivers:'Gestion des livreurs',
+    reports:'Rapports journaliers', profile:'Profil admin'
+  };
+
+  document.querySelectorAll('[data-atab]').forEach(function(nb){
+    nb.addEventListener('click', function(){
+      var tab = this.getAttribute('data-atab');
+      document.querySelectorAll('.atab').forEach(function(t){ t.classList.remove('on'); });
+      var el = document.getElementById('atab-'+tab);
+      if (el) el.classList.add('on');
+      document.getElementById('adminTitle').textContent = ATITLES[tab] || tab;
+      document.querySelectorAll('#adminNav .nb').forEach(function(b){ b.classList.remove('on'); });
+      this.classList.add('on');
+
+      /* Arrêter l'écoute GPS si on quitte l'onglet GPS */
+      if (tab !== 'gps' && gpsUnsubscribe) {
+        gpsUnsubscribe(); gpsUnsubscribe = null;
+      }
+
+      if (tab === 'dash')    { renderAdminDash(); startDashAutoRefresh(); }
+      if (tab === 'gps')     { renderAdminGPS(); }
+      if (tab === 'drivers') { renderAdminDrivers(); }
+      if (tab === 'reports') { renderAdminReports(); stopDashAutoRefresh(); }
+      if (tab === 'profile') {
+        stopDashAutoRefresh();
+        var c = document.getElementById('profileCount');
+        if (c) c.textContent = getDrivers().length + ' livreur(s)';
+      }
+    });
+  });
+
+  /* Bouton refresh dashboard */
+  var btnRefresh = document.getElementById('btnRefreshDash');
+  if (btnRefresh) {
+    btnRefresh.addEventListener('click', function(){
+      var icon = this.querySelector('i');
+      if (icon) icon.classList.add('fa-spin');
+      var self = this;
+      loadReportsFromFirebase(function(reps){
+        renderAdminDash();
+        if (icon) icon.classList.remove('fa-spin');
+        toast('Dashboard mis à jour', 'success');
+      });
+      syncDriversFromFirebase();
+    });
+  }
+
+  /* --- ADMIN DRIVER CREATE --- */
+  document.getElementById('btnCreateDriver').addEventListener('click', function(){ openDriverForm(null); });
+  document.getElementById('btnCancelDriver').addEventListener('click', function(){ closeModal('mDriverForm'); });
+  document.getElementById('btnSaveDriver').addEventListener('click', saveDriverForm);
+
+  /* --- ADMIN DRIVER ACTIONS (delegated) --- */
+  document.getElementById('adminDriversList').addEventListener('click', function(e){
+    var btn = e.target.closest('.driverAction'); if(!btn) return;
+    var action=btn.getAttribute('data-action'), email=btn.getAttribute('data-email');
+    if(action==='edit')   openDriverForm(email);
+    if(action==='toggle') toggleDriver(email);
+    if(action==='delete'){
+      var d=getDrivers().find(function(x){return x.email===email;}); if(!d) return;
+      document.getElementById('delDriverName').textContent='Supprimer le compte de "'+d.name+'" ?';
+      pendingDelEmail=email;
+      openModal('mDelDriver');
+    }
+  });
+
+  document.getElementById('btnCancelDel').addEventListener('click', function(){ closeModal('mDelDriver'); pendingDelEmail=null; });
+  document.getElementById('btnConfirmDel').addEventListener('click', function(){
+    if(pendingDelEmail){
+      var d=getDrivers().find(function(x){return x.email===pendingDelEmail;});
+      saveDrivers(getDrivers().filter(function(x){return x.email!==pendingDelEmail;}));
+      closeModal('mDelDriver'); pendingDelEmail=null;
+      renderAdminDrivers();
+      toast('🗑️ '+(d?d.name:'Livreur')+' supprimé','success');
+    }
+  });
+
+  /* --- MODAL BACKDROP --- */
+  document.querySelectorAll('.mbg').forEach(function(m){
+    m.addEventListener('click', function(e){ if(e.target===m) m.classList.remove('on'); });
+  });
+
+  /* --- EXPORT BUTTONS --- */
+  document.getElementById('btnExportCSV').addEventListener('click', exportCSV);
+  document.getElementById('btnExportXLSX').addEventListener('click', exportXLSX);
+
+}); // end DOMContentLoaded
+
+})(); // end IIFE
 </script>
 </body>
 </html>
