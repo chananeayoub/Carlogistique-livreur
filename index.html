@@ -255,7 +255,7 @@ textarea.ibox{resize:none;min-height:72px;font-size:14px;font-weight:400;line-he
       <div class="sec">Journée en cours</div>
       <div class="srow">
         <div class="sbox"><div class="sbox-lbl">Km départ</div><div class="sbox-val" id="stKm" style="color:var(--ac)">—</div><div class="sbox-unit">km</div></div>
-        <div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" id="stExp" style="color:var(--yellow)">0</div><div class="sbox-unit">euros</div></div>
+        <div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" id="stExp" style="color:var(--yellow)">0</div><div class="sbox-unit">CAD</div></div>
       </div>
       <div class="srow">
         <div class="sbox"><div class="sbox-lbl">Colis livrés</div><div class="sbox-val" id="stDel" style="color:var(--blue)">0</div><div class="sbox-unit">colis</div></div>
@@ -352,7 +352,7 @@ textarea.ibox{resize:none;min-height:72px;font-size:14px;font-weight:400;line-he
 <!-- EXPENSES -->
 <div id="scExpenses" class="screen">
   <div class="topbar">
-    <div style="flex:1"><div class="tbtitle">Dépenses</div><span class="tbsub" id="expTotal">Total : 0 €</span></div>
+    <div style="flex:1"><div class="tbtitle">Dépenses</div><span class="tbsub" id="expTotal">Total : 0 CAD</span></div>
     <button class="btn btn-ac btn-sm" id="btnOpenAddExp"><i class="fas fa-plus"></i> Ajouter</button>
   </div>
   <div class="content">
@@ -383,7 +383,7 @@ textarea.ibox{resize:none;min-height:72px;font-size:14px;font-weight:400;line-he
       <div class="sumrow"><span class="sumkey">Km de départ</span><span class="sumval" id="endKmStart">—</span></div>
       <div class="sumrow"><span class="sumkey">Colis livrés</span><span class="sumval" id="endColis" style="color:var(--blue)">0</span></div>
       <div class="sumrow"><span class="sumkey">Colis ramassés</span><span class="sumval" id="endRamassage" style="color:var(--green)">0</span></div>
-      <div class="sumrow"><span class="sumkey">Dépenses totales</span><span class="sumval" id="endExp" style="color:var(--yellow)">0 €</span></div>
+      <div class="sumrow"><span class="sumkey">Dépenses totales</span><span class="sumval" id="endExp" style="color:var(--yellow)">0 CAD</span></div>
     </div>
     <div class="sec">🔢 Kilométrage de fin</div>
     <input class="ibox big" type="number" id="kmEndInput" placeholder="48 490" inputmode="numeric">
@@ -486,7 +486,7 @@ textarea.ibox{resize:none;min-height:72px;font-size:14px;font-weight:400;line-he
       <div class="tbtn" data-type="Péage"><div class="tbtn-ico">🛣️</div><div class="tbtn-lbl">Péage</div></div>
       <div class="tbtn" data-type="Autre"><div class="tbtn-ico">📌</div><div class="tbtn-lbl">Autre</div></div>
     </div>
-    <div class="mfield"><label class="ilbl">Montant (€)</label><input class="ibox" type="number" id="expAmount" placeholder="0.00" inputmode="decimal" step="0.01"></div>
+    <div class="mfield"><label class="ilbl">Montant (CAD)</label><input class="ibox" type="number" id="expAmount" placeholder="0.00" inputmode="decimal" step="0.01"></div>
     <div style="font-size:11px;font-weight:700;color:var(--t2);letter-spacing:.8px;text-transform:uppercase;margin-bottom:9px">PHOTO DU REÇU <span style="color:var(--red)">*</span></div>
     <div class="pzone" id="pzoneExp"><div style="font-size:26px">📷</div><div style="font-size:13px;font-weight:600;color:var(--t2)">Photographier le reçu</div><div style="font-size:11px;color:var(--t3)">Obligatoire · Compressée automatiquement</div></div>
     <div class="btn2col">
@@ -1008,7 +1008,7 @@ function saveDelivery() {
 function renderExpenses() {
   var list = document.getElementById('expList');
   var total = day.expenses.reduce(function(s,e){return s+e.amount;},0);
-  var elT = document.getElementById('expTotal'); if(elT) elT.textContent = 'Total : '+total+' €';
+  var elT = document.getElementById('expTotal'); if(elT) elT.textContent = 'Total : '+total+' CAD';
   if (!day.expenses.length) {
     list.innerHTML = '<div style="text-align:center;padding:52px 20px;color:var(--t3)"><div style="font-size:36px;margin-bottom:10px">🧾</div><div style="font-size:15px;font-weight:700;color:var(--t2);margin-bottom:5px">Aucune dépense</div><div style="font-size:13px">Appuyez sur + Ajouter</div></div>';
     return;
@@ -1018,11 +1018,11 @@ function renderExpenses() {
   list.innerHTML = day.expenses.map(function(e){
     return '<div class="eitem"><div class="eico" style="background:'+(colors[e.type]||'rgba(255,255,255,.05)')+'">'+( icons[e.type]||'📌')+'</div>'+
       '<div class="einfo"><div class="etype">'+e.type+'</div><div class="etime">'+e.time+' · <span style="color:var(--green)">📷 Reçu</span></div></div>'+
-      '<div class="eamt">'+e.amount+'€</div>'+
+      '<div class="eamt">'+e.amount+'CAD</div>'+
       '<div class="edel" data-id="'+e.id+'"><i class="fas fa-trash-alt"></i></div></div>';
   }).join('') +
     '<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:2px">'+
-    '<span style="font-size:14px;font-weight:700">Total</span><span style="font-size:20px;font-weight:800;color:var(--yellow)">'+total+' €</span></div>';
+    '<span style="font-size:14px;font-weight:700">Total</span><span style="font-size:20px;font-weight:800;color:var(--yellow)">'+total+' CAD</span></div>';
 }
 
 /* ── END DAY ── */
@@ -1081,7 +1081,7 @@ function confirmEnd() {
   var totE = (day.expenses||[]).reduce(function(s,e){return s+e.amount;},0);
   document.getElementById('cKm').textContent    = kmT + ' km';
   document.getElementById('cColis').textContent = totC;
-  document.getElementById('cExp').textContent   = totE + ' €';
+  document.getElementById('cExp').textContent   = totE + ' CAD';
   day._confirmOverride = false;
   openModal('mConfirmEnd');
 }
@@ -1090,7 +1090,7 @@ function updateEndUI() {
   document.getElementById('endKmStart').textContent = day.kmStart ? day.kmStart.toLocaleString()+' km' : '—';
   document.getElementById('endColis').textContent    = day.packagesDelivered||0;
   document.getElementById('endRamassage').textContent= day.packagesPickup||0;
-  document.getElementById('endExp').textContent      = day.expenses.reduce(function(s,e){return s+e.amount;},0)+' €';
+  document.getElementById('endExp').textContent      = day.expenses.reduce(function(s,e){return s+e.amount;},0)+' CAD';
   checkFinish();
 }
 
@@ -1105,7 +1105,7 @@ function finalizeDay() {
   /* Afficher les données dans le modal de succès */
   document.getElementById('dKm').textContent    = kmT + ' km';
   document.getElementById('dColis').textContent = totC;
-  document.getElementById('dExp').textContent   = totE + ' €';
+  document.getElementById('dExp').textContent   = totE + ' CAD';
 
   /* Construire le rapport */
   var rep = {
@@ -1385,7 +1385,7 @@ function startDashAutoRefresh() {
           '<div class="sbox"><div class="sbox-lbl">Livreurs actifs</div><div class="sbox-val" style="color:var(--ac)">'+active+'</div><div class="sbox-unit">sur '+drivers.length+'</div></div>'+
           '<div class="sbox"><div class="sbox-lbl">Colis aujourd\'hui</div><div class="sbox-val" style="color:var(--blue)">'+totC+'</div><div class="sbox-unit">livrés+ramassés</div></div>'+
           '<div class="sbox"><div class="sbox-lbl">Km aujourd\'hui</div><div class="sbox-val" style="color:var(--green)">'+totKm+'</div><div class="sbox-unit">kilomètres</div></div>'+
-          '<div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" style="color:var(--yellow)">'+totE+'€</div><div class="sbox-unit">aujourd\'hui</div></div>';
+          '<div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" style="color:var(--yellow)">'+totE+'CAD</div><div class="sbox-unit">aujourd\'hui</div></div>';
       });
     }
   }, 60000); /* Toutes les 60 secondes */
@@ -1414,7 +1414,7 @@ function renderAdminDash() {
       '<div class="sbox"><div class="sbox-lbl">Livreurs actifs</div><div class="sbox-val" style="color:var(--ac)">'+active+'</div><div class="sbox-unit">sur '+drivers.length+'</div></div>'+
       '<div class="sbox"><div class="sbox-lbl">Colis aujourd\'hui</div><div class="sbox-val" style="color:var(--blue)">'+totC+'</div><div class="sbox-unit">livrés+ramassés</div></div>'+
       '<div class="sbox"><div class="sbox-lbl">Km aujourd\'hui</div><div class="sbox-val" style="color:var(--green)">'+totKm+'</div><div class="sbox-unit">kilomètres</div></div>'+
-      '<div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" style="color:var(--yellow)">'+totE+'€</div><div class="sbox-unit">aujourd\'hui</div></div>';
+      '<div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" style="color:var(--yellow)">'+totE+'CAD</div><div class="sbox-unit">aujourd\'hui</div></div>';
 
     var clrs=['#f97316','#3b82f6','#22c55e','#a855f7','#f59e0b'];
     var cont = document.getElementById('adminDriversDay');
@@ -1426,7 +1426,7 @@ function renderAdminDash() {
       return '<div class="card" style="margin-bottom:9px"><div style="display:flex;align-items:center;gap:10px">'+
         '<div style="width:36px;height:36px;background:'+clrs[i%clrs.length]+';border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0">'+init+'</div>'+
         '<div style="flex:1"><div style="font-size:14px;font-weight:700">'+d.name+'</div>'+
-        (rep?'<div style="font-size:12px;color:var(--t2)">'+((rep.packagesDelivered||0)+(rep.packagesPickup||0))+' colis · '+(rep.kmTotal||0)+' km · '+(rep.expenses||[]).reduce(function(s,e){return s+e.amount;},0)+'€</div>'
+        (rep?'<div style="font-size:12px;color:var(--t2)">'+((rep.packagesDelivered||0)+(rep.packagesPickup||0))+' colis · '+(rep.kmTotal||0)+' km · '+(rep.expenses||[]).reduce(function(s,e){return s+e.amount;},0)+'CAD</div>'
             :'<div style="font-size:12px;color:var(--t3)">Pas encore commencé</div>')+
         '</div><div style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;'+(rep?'background:rgba(34,197,94,.15);color:var(--green)':'background:rgba(74,85,104,.2);color:var(--t3)')+'">'+
         (rep?'● En cours':'○')+'</div></div></div>';
@@ -1547,8 +1547,8 @@ function renderAdminReports() {
                 if(!e.photo) return;
                 recusHtml+='<div>' +
                   '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">' +
-                  '<span style="font-size:9px;color:var(--t3)">'+e.type+' '+e.amount+'€</span>' +
-                  '<button class="adminDeleteBtn" data-action="deletePhoto" data-param="'+dEmail+'|'+dDate+'|exp'+ei+'" data-title="Supprimer ce reçu ?" data-sub="Reçu '+e.type+' — '+e.amount+'€" ' +
+                  '<span style="font-size:9px;color:var(--t3)">'+e.type+' '+e.amount+'CAD</span>' +
+                  '<button class="adminDeleteBtn" data-action="deletePhoto" data-param="'+dEmail+'|'+dDate+'|exp'+ei+'" data-title="Supprimer ce reçu ?" data-sub="Reçu '+e.type+' — '+e.amount+'CAD" ' +
                   'style="background:none;border:none;color:var(--red);cursor:pointer;font-size:10px;padding:1px 4px">🗑️</button>' +
                   '</div>' +
                   '<img src="'+e.photo+'" style="width:100%;border-radius:6px;cursor:pointer" onclick="viewFullPhoto(this.src)"></div>';
@@ -1568,7 +1568,7 @@ function renderAdminReports() {
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'+
             '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Km parcourus</div><div style="font-size:16px;font-weight:800;color:var(--ac)">'+(r.kmTotal||0)+'</div></div>'+
             '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Total colis</div><div style="font-size:16px;font-weight:800;color:var(--blue)">'+totC+'</div></div>'+
-            '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Dépenses</div><div style="font-size:16px;font-weight:800;color:var(--yellow)">'+totE+'€</div></div>'+
+            '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Dépenses</div><div style="font-size:16px;font-weight:800;color:var(--yellow)">'+totE+'CAD</div></div>'+
             '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Total stops</div><div style="font-size:16px;font-weight:800;color:var(--green)">'+totS+'</div></div>'+
             '</div>'+
             (r.exceptions?'<div style="margin-top:8px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:9px;padding:8px;font-size:12px;color:var(--yellow)">⚠️ '+r.exceptions+'</div>':'')+
@@ -1697,7 +1697,7 @@ function exportCSV() {
   /* === RÉSUMÉ GLOBAL === */
   lines.push(q('=== RÉSUMÉ GLOBAL ==='));
   lines.push('');
-  lines.push([q('Livreur'),q('Total Km'),q('Stops Livrés'),q('Colis Livrés'),q('Stops Ramassés'),q('Colis Ramassés'),q('Total Stops'),q('Total Colis'),q('Dépenses (€)')].join(sep));
+  lines.push([q('Livreur'),q('Total Km'),q('Stops Livrés'),q('Colis Livrés'),q('Stops Ramassés'),q('Colis Ramassés'),q('Total Stops'),q('Total Colis'),q('Dépenses (CAD)')].join(sep));
 
   var grandTotals = {km:0,stD:0,pkD:0,stP:0,pkP:0,exp:0};
 
@@ -1716,7 +1716,7 @@ function exportCSV() {
   lines.push([q('TOTAL GÉNÉRAL'),grandTotals.km,grandTotals.stD,grandTotals.pkD,grandTotals.stP,grandTotals.pkP,(grandTotals.stD+grandTotals.stP),(grandTotals.pkD+grandTotals.pkP),grandTotals.exp].join(sep));
 
   /* === DÉTAIL PAR LIVREUR === */
-  var COLS = [q('Date'),q('Km Départ'),q('Km Fin'),q('Km Total'),q('Stops Livrés'),q('Colis Livrés'),q('Stops Ramassés'),q('Colis Ramassés'),q('Total Stops'),q('Total Colis'),q('Dépenses (€)'),q('Exceptions'),q('Photo Scanner'),q('Photo Km')];
+  var COLS = [q('Date'),q('Km Départ'),q('Km Fin'),q('Km Total'),q('Stops Livrés'),q('Colis Livrés'),q('Stops Ramassés'),q('Colis Ramassés'),q('Total Stops'),q('Total Colis'),q('Dépenses (CAD)'),q('Exceptions'),q('Photo Scanner'),q('Photo Km')];
 
   drivers.forEach(function(d) {
     var dReps = allReps.filter(function(r){return r.driverEmail===d.email;});
@@ -1864,7 +1864,7 @@ function buildExcelJS(drivers, allReps, onDone) {
   t1.alignment = align('center','center');
 
   /* En-têtes row 3 */
-  var h0 = ['Livreur','Total Km','Stops Livrés','Colis Livrés','Stops Ramassés','Colis Ramassés','Total Stops','Total Colis','Dépenses (€)'];
+  var h0 = ['Livreur','Total Km','Stops Livrés','Colis Livrés','Stops Ramassés','Colis Ramassés','Total Stops','Total Colis','Dépenses (CAD)'];
   var hBg0 = [CLR.dark2,CLR.blue,CLR.green,CLR.green,CLR.purple,CLR.purple,CLR.blue,CLR.orange,CLR.yellow];
   var r3 = ws0.getRow(3);
   h0.forEach(function(h,i){ var c=r3.getCell(i+1); c.value=h; styleHdr(c, hBg0[i]); });
@@ -1939,7 +1939,7 @@ function buildExcelJS(drivers, allReps, onDone) {
     ic.alignment = align('center','center');
 
     /* En-têtes */
-    var cols = ['Date','Km Départ','Km Fin','Km Total','Stops Livrés','Colis Livrés','Stops Ramassés','Colis Ramassés','Total Stops','Total Colis','Dépenses (€)','Exceptions'];
+    var cols = ['Date','Km Départ','Km Fin','Km Total','Stops Livrés','Colis Livrés','Stops Ramassés','Colis Ramassés','Total Stops','Total Colis','Dépenses (CAD)','Exceptions'];
     var cbg  = [CLR.dark2,ac,ac,ac,CLR.green,CLR.green,CLR.purple,CLR.purple,CLR.blue,CLR.orange,CLR.yellow,CLR.dark2];
     var hRow = ws.getRow(3);
     hRow.height = 20;
@@ -2071,7 +2071,7 @@ function buildExcelJS(drivers, allReps, onDone) {
             styleData(wsPh.getCell(phIdx,1), CLR.yellowL, CLR.dark, true, 'center');
             wsPh.getCell(phIdx,2).value = 'Reçu — ' + (exp.type||'');
             styleData(wsPh.getCell(phIdx,2), CLR.yellowL, CLR.dark, false, 'center');
-            wsPh.getCell(phIdx,3).value = (exp.amount||0) + ' €';
+            wsPh.getCell(phIdx,3).value = (exp.amount||0) + ' CAD';
             styleData(wsPh.getCell(phIdx,3), CLR.yellowL, CLR.yellow, true, 'center');
             wsPh.addImage(imgId3, { tl:{col:3, row:phIdx-1}, br:{col:4, row:phIdx}, editAs:'oneCell' });
             phIdx++;
@@ -2283,8 +2283,8 @@ window.addEventListener('DOMContentLoaded', function() {
     day.expenses.push({id:Date.now(),type:expType,amount:amount,photo:expPhotoData,time:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})});
     saveSession(); renderExpenses(); refreshHome();
     closeModal('mAddExp');
-    toast('✅ '+amount+'€ ('+expType+')','success');
-    addTL('Dépense : <strong>'+amount+'€</strong> ('+expType+')');
+    toast('✅ '+amount+'CAD ('+expType+')','success');
+    addTL('Dépense : <strong>'+amount+'CAD</strong> ('+expType+')');
   });
 
   /* expense list delete (delegated) */
