@@ -854,15 +854,28 @@ function doLogin() {
       onLoginSuccess(acc);
       return;
     }
-    /* Chercher dans la liste fournie */
+    /* Chercher dans la liste — vérifier si compte existe mais inactif */
+    var foundInactive = false;
     for (var i = 0; i < drivers.length; i++) {
       var d = drivers[i];
-      if (d.active && d.email.toLowerCase() === e && d.password === p) {
+      if (d.email.toLowerCase() === e && d.password === p) {
+        if (!d.active) {
+          foundInactive = true;
+          break;
+        }
         onLoginSuccess(d);
         return;
       }
     }
-    /* Pas trouvé */
+    /* Compte inactif */
+    if (foundInactive) {
+      errEl.style.display = 'block';
+      errEl.innerHTML = '🚫 Votre accès a été suspendu. Contactez votre responsable.';
+      btn.textContent = 'Se connecter';
+      btn.disabled = false;
+      return;
+    }
+    /* Pas trouvé du tout */
     errEl.style.display = 'block';
     errEl.textContent = 'Email ou mot de passe incorrect';
     btn.textContent = 'Se connecter';
@@ -881,6 +894,7 @@ function doLogin() {
     } else {
       initDriverUI();
       show('scHome');
+      startSessionWatch(); /* Surveiller si compte désactivé */
       toast('Bienvenue, ' + acc.name.split(' ')[0] + ' 👋', 'success');
     }
   }
@@ -920,6 +934,7 @@ function doLogin() {
 
 function doLogout() {
   if (!confirm('Se déconnecter ?')) return;
+  if (sessionWatchInterval) { clearInterval(sessionWatchInterval); sessionWatchInterval = null; }
   stopGPS();
   stopDashAutoRefresh();
   currentUser = null;
@@ -1018,7 +1033,7 @@ function renderExpenses() {
   list.innerHTML = day.expenses.map(function(e){
     return '<div class="eitem"><div class="eico" style="background:'+(colors[e.type]||'rgba(255,255,255,.05)')+'">'+( icons[e.type]||'📌')+'</div>'+
       '<div class="einfo"><div class="etype">'+e.type+'</div><div class="etime">'+e.time+' · <span style="color:var(--green)">📷 Reçu</span></div></div>'+
-      '<div class="eamt">'+e.amount+'CAD</div>'+
+      '<div class="eamt">'+e.amount+' CAD</div>'+
       '<div class="edel" data-id="'+e.id+'"><i class="fas fa-trash-alt"></i></div></div>';
   }).join('') +
     '<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:2px">'+
@@ -1172,47 +1187,151 @@ function resetDay() {
   saveSession(); refreshHome(); show('scHome');
 }
 
+function autoLogoutAfterDay() {
+  /* Arrêter GPS et surveillance de session */
+  stopGPS();
+  if (sessionWatchInterval) { clearInterval(sessionWatchInterval); sessionWatchInterval = null; }
+
+  /* Réinitialiser les données de journée */
+  day = {started:false,ended:false,date:null,kmStart:null,kmEnd:null,stopsDelivered:0,packagesDelivered:0,stopsPickup:0,packagesPickup:0,exceptions:'',expenses:[]};
+  scanPhotoData=null; odoPhotoData=null;
+
+  /* Effacer la session */
+  currentUser = null;
+  clearSession();
+
+  /* Aller à l'écran de connexion */
+  show('scLogin');
+
+  /* Remettre le bouton de connexion en état normal */
+  var btn = document.getElementById('loginBtn');
+  if (btn) { btn.textContent = 'Se connecter'; btn.disabled = false; }
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPass').value  = '';
+  document.getElementById('loginErr').style.display = 'none';
+
+  toast('✅ Journée terminée — À demain !', 'success');
+}
+
 /* ── PHOTO ── */
 function onPhotoSelected(e) {
-  var file = e.target.files[0]; if (!file) return;
+  var file = e.target.files[0];
+  if (!file) return;
+
+  /* Indicateur de chargement */
+  var zoneId = photoTarget === 'expense' ? 'pzoneExp' : (photoTarget === 'scan' ? 'pzoneScan' : 'pzoneOdo');
+  var zone = document.getElementById(zoneId);
+  if (zone) {
+    zone.innerHTML = '<div style="font-size:22px">⏳</div><div style="font-size:12px;color:var(--t2);margin-top:4px">Traitement…</div>';
+  }
+
   var reader = new FileReader();
   reader.onload = function(ev) {
-    compressImg(ev.target.result, 1200, 0.75, function(c) {
+    /* Compression adaptative selon taille fichier */
+    var maxW = file.size > 2000000 ? 800 : 1200;
+    var qual = file.size > 3000000 ? 0.6 : 0.75;
+    compressImg(ev.target.result, maxW, qual, function(c) {
       if (photoTarget === 'expense') {
         expPhotoData = c;
-        var z = document.getElementById('pzoneExp'); z.classList.add('done');
-        z.innerHTML = '<img src="'+c+'"><div class="pzone-ov"><div style="font-size:22px">✅</div><div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div></div><div class="pbadge">✓</div>';
+        var z = document.getElementById('pzoneExp');
+        if(z){ z.classList.add('done'); z.innerHTML = '<img src="'+c+'"><div class="pzone-ov"><div style="font-size:22px">✅</div><div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div></div><div class="pbadge">✓</div>'; }
       } else if (photoTarget === 'scan') {
         scanPhotoData = c;
-        var z = document.getElementById('pzoneScan'); z.classList.add('done');
-        z.innerHTML = '<img src="'+c+'"><div class="pzone-ov"><div style="font-size:22px">✅</div><div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div></div><div class="pbadge">✓</div>';
+        var z = document.getElementById('pzoneScan');
+        if(z){ z.classList.add('done'); z.innerHTML = '<img src="'+c+'"><div class="pzone-ov"><div style="font-size:22px">✅</div><div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div></div><div class="pbadge">✓</div>'; }
         markCheck('chk-scan','chk-scan-l',true); checkFinish();
         toast('📄 Photo rapport enregistrée','success');
       } else if (photoTarget === 'odo') {
         odoPhotoData = c;
-        var z = document.getElementById('pzoneOdo'); z.classList.add('done');
-        z.innerHTML = '<img src="'+c+'"><div class="pzone-ov"><div style="font-size:22px">✅</div><div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div></div><div class="pbadge">✓</div>';
+        var z = document.getElementById('pzoneOdo');
+        if(z){ z.classList.add('done'); z.innerHTML = '<img src="'+c+'"><div class="pzone-ov"><div style="font-size:22px">✅</div><div style="font-size:13px;color:#fff;font-weight:600">Photo capturée</div></div><div class="pbadge">✓</div>'; }
         markCheck('chk-odo','chk-odo-l',true); checkFinish();
         toast('🚗 Photo kilométrage enregistrée','success');
       }
     });
   };
-  reader.readAsDataURL(file); e.target.value = '';
+  reader.onerror = function() {
+    toast('Erreur lecture — appuyez pour réessayer', 'error');
+    var z2 = document.getElementById(zoneId);
+    if (z2) z2.innerHTML = '<div style="font-size:26px">📷</div><div style="font-size:13px;font-weight:600;color:var(--red)">Erreur — appuyez pour réessayer</div>';
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
 }
 
 function compressImg(src, maxW, q, cb) {
   var img = new Image();
   img.onload = function() {
-    var r = Math.min(1, maxW/img.width);
-    var c = document.createElement('canvas'); c.width=img.width*r; c.height=img.height*r;
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    cb(c.toDataURL('image/jpeg',q));
+    try {
+      var r = Math.min(1, maxW / img.width);
+      var c = document.createElement('canvas');
+      c.width  = Math.round(img.width  * r);
+      c.height = Math.round(img.height * r);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      var result = c.toDataURL('image/jpeg', q);
+      /* Si encore > 400KB, recompresser automatiquement */
+      if (result.length > 400000 && q > 0.4) {
+        compressImg(src, Math.round(maxW * 0.75), Math.round((q - 0.15) * 100) / 100, cb);
+      } else {
+        cb(result);
+      }
+    } catch(err) {
+      cb(src);
+    }
   };
+  img.onerror = function() { cb(src); };
   img.src = src;
 }
 
 /* ── GPS TRACKING (livreur → Firebase) ── */
 var gpsWatchId = null;
+var sessionWatchInterval = null;
+
+/* Vérifier périodiquement si le compte est toujours actif */
+function startSessionWatch() {
+  if (sessionWatchInterval) clearInterval(sessionWatchInterval);
+  sessionWatchInterval = setInterval(function() {
+    if (!currentUser || currentUser.role === 'admin') return;
+    if (!fbReady) return;
+    var emailKey = currentUser.email.replace(/[@.]/g,'_');
+    db.collection('driverStatus').doc(emailKey).get().then(function(doc) {
+      if (doc.exists) {
+        var data = doc.data();
+        if (data.active === false) {
+          /* Compte désactivé ou supprimé par l'admin */
+          clearInterval(sessionWatchInterval);
+          clearSession();
+          currentUser = null;
+          show('scLogin');
+          /* Afficher message d'erreur spécial */
+          var errEl = document.getElementById('loginErr');
+          if (errEl) {
+            errEl.style.display = 'block';
+            errEl.innerHTML = '🚫 Votre accès a été suspendu par l\'administrateur. Contactez votre responsable.';
+          }
+          var btn = document.getElementById('loginBtn');
+          if (btn) { btn.textContent = 'Se connecter'; btn.disabled = false; }
+          toast('Accès suspendu — contactez l\'admin', 'error');
+        }
+      }
+    }).catch(function(){});
+
+    /* Aussi vérifier dans la liste locale */
+    var drivers = getDrivers();
+    var d = drivers.find(function(x){ return x.email === currentUser.email; });
+    if (d && !d.active) {
+      clearInterval(sessionWatchInterval);
+      clearSession();
+      currentUser = null;
+      show('scLogin');
+      var errEl2 = document.getElementById('loginErr');
+      if (errEl2) {
+        errEl2.style.display = 'block';
+        errEl2.innerHTML = '🚫 Votre accès a été suspendu. Contactez votre responsable.';
+      }
+    }
+  }, 30000); /* Vérifier toutes les 30 secondes */
+}
 
 function startGPS() {
   if (!navigator.geolocation) {
@@ -1220,34 +1339,65 @@ function startGPS() {
     if (el) el.textContent = 'GPS non disponible sur cet appareil';
     return;
   }
-  gpsWatchId = navigator.geolocation.watchPosition(
-    function(pos) {
-      var lat = pos.coords.latitude;
-      var lng = pos.coords.longitude;
-      var el = document.getElementById('gpsText');
-      if (el) el.textContent = 'GPS actif — ' + lat.toFixed(5) + ', ' + lng.toFixed(5);
 
-      /* Envoyer position à Firebase si livreur connecté et journée démarrée */
-      if (fbReady && currentUser && currentUser.role !== 'admin' && day.started && !day.ended) {
-        var emailSafe = currentUser.email.replace(/[@.]/g, '_');
-        db.collection('gps').doc(emailSafe).set({
-          email:     currentUser.email,
-          name:      currentUser.name,
-          initials:  currentUser.initials || '',
-          lat:       lat,
-          lng:       lng,
-          accuracy:  pos.coords.accuracy,
-          updatedAt: new Date().toISOString(),
-          active:    true
-        }).catch(function(e){ console.warn('GPS write:', e.message); });
-      }
-    },
-    function(err) {
-      var el = document.getElementById('gpsText');
-      if (el) el.textContent = 'GPS — localisation en arrière-plan';
-    },
-    { enableHighAccuracy:true, maximumAge:20000, timeout:15000 }
+  /* Samsung et certains Android nécessitent getCurrentPosition d'abord
+     pour déclencher la permission, avant watchPosition */
+  navigator.geolocation.getCurrentPosition(
+    function(pos) { /* Premier fix obtenu — maintenant lancer le watch */ },
+    function() { /* Ignorer l'erreur initiale */ },
+    { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
   );
+
+  /* Petit délai pour laisser le système GPS s'initialiser sur Samsung */
+  setTimeout(function() {
+    gpsWatchId = navigator.geolocation.watchPosition(
+      function(pos) {
+        var lat = pos.coords.latitude;
+        var lng = pos.coords.longitude;
+        var el = document.getElementById('gpsText');
+        if (el) el.textContent = 'GPS actif — ' + lat.toFixed(5) + ', ' + lng.toFixed(5);
+
+        /* Envoyer position à Firebase si livreur avec journée active */
+        if (fbReady && currentUser && currentUser.role !== 'admin' && day.started && !day.ended) {
+          var emailSafe = currentUser.email.replace(/[@.]/g, '_');
+          db.collection('gps').doc(emailSafe).set({
+            email:     currentUser.email,
+            name:      currentUser.name,
+            initials:  currentUser.initials || '',
+            lat:       lat,
+            lng:       lng,
+            accuracy:  pos.coords.accuracy,
+            updatedAt: new Date().toISOString(),
+            active:    true
+          }).catch(function(e){ console.warn('GPS write:', e.message); });
+        }
+      },
+      function(err) {
+        var el = document.getElementById('gpsText');
+        if (!el) return;
+        /* Codes d'erreur : 1=permission refusée, 2=non disponible, 3=timeout */
+        if (err.code === 1) {
+          el.textContent = 'GPS désactivé — activez la localisation';
+        } else if (err.code === 2) {
+          el.textContent = 'GPS — signal faible';
+          /* Réessayer avec précision réduite sur Samsung */
+          setTimeout(function() {
+            if (gpsWatchId !== null) return;
+            gpsWatchId = navigator.geolocation.watchPosition(
+              function(p2) {
+                if (el) el.textContent = 'GPS actif (précision réduite) — ' + p2.coords.latitude.toFixed(4) + ', ' + p2.coords.longitude.toFixed(4);
+              },
+              function() { if (el) el.textContent = 'GPS — localisation en arrière-plan'; },
+              { enableHighAccuracy: false, maximumAge: 60000, timeout: 30000 }
+            );
+          }, 3000);
+        } else {
+          el.textContent = 'GPS — localisation en arrière-plan';
+        }
+      },
+      { enableHighAccuracy: true, maximumAge: 20000, timeout: 20000 }
+    );
+  }, 800);
 }
 
 function stopGPS() {
@@ -1385,7 +1535,7 @@ function startDashAutoRefresh() {
           '<div class="sbox"><div class="sbox-lbl">Livreurs actifs</div><div class="sbox-val" style="color:var(--ac)">'+active+'</div><div class="sbox-unit">sur '+drivers.length+'</div></div>'+
           '<div class="sbox"><div class="sbox-lbl">Colis aujourd\'hui</div><div class="sbox-val" style="color:var(--blue)">'+totC+'</div><div class="sbox-unit">livrés+ramassés</div></div>'+
           '<div class="sbox"><div class="sbox-lbl">Km aujourd\'hui</div><div class="sbox-val" style="color:var(--green)">'+totKm+'</div><div class="sbox-unit">kilomètres</div></div>'+
-          '<div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" style="color:var(--yellow)">'+totE+'CAD</div><div class="sbox-unit">aujourd\'hui</div></div>';
+          '<div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" style="color:var(--yellow)">'+totE+' CAD</div><div class="sbox-unit">aujourd\'hui</div></div>';
       });
     }
   }, 60000); /* Toutes les 60 secondes */
@@ -1414,7 +1564,7 @@ function renderAdminDash() {
       '<div class="sbox"><div class="sbox-lbl">Livreurs actifs</div><div class="sbox-val" style="color:var(--ac)">'+active+'</div><div class="sbox-unit">sur '+drivers.length+'</div></div>'+
       '<div class="sbox"><div class="sbox-lbl">Colis aujourd\'hui</div><div class="sbox-val" style="color:var(--blue)">'+totC+'</div><div class="sbox-unit">livrés+ramassés</div></div>'+
       '<div class="sbox"><div class="sbox-lbl">Km aujourd\'hui</div><div class="sbox-val" style="color:var(--green)">'+totKm+'</div><div class="sbox-unit">kilomètres</div></div>'+
-      '<div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" style="color:var(--yellow)">'+totE+'CAD</div><div class="sbox-unit">aujourd\'hui</div></div>';
+      '<div class="sbox"><div class="sbox-lbl">Dépenses</div><div class="sbox-val" style="color:var(--yellow)">'+totE+' CAD</div><div class="sbox-unit">aujourd\'hui</div></div>';
 
     var clrs=['#f97316','#3b82f6','#22c55e','#a855f7','#f59e0b'];
     var cont = document.getElementById('adminDriversDay');
@@ -1547,8 +1697,8 @@ function renderAdminReports() {
                 if(!e.photo) return;
                 recusHtml+='<div>' +
                   '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">' +
-                  '<span style="font-size:9px;color:var(--t3)">'+e.type+' '+e.amount+'CAD</span>' +
-                  '<button class="adminDeleteBtn" data-action="deletePhoto" data-param="'+dEmail+'|'+dDate+'|exp'+ei+'" data-title="Supprimer ce reçu ?" data-sub="Reçu '+e.type+' — '+e.amount+'CAD" ' +
+                  '<span style="font-size:9px;color:var(--t3)">'+e.type+' '+e.amount+' CAD</span>' +
+                  '<button class="adminDeleteBtn" data-action="deletePhoto" data-param="'+dEmail+'|'+dDate+'|exp'+ei+'" data-title="Supprimer ce reçu ?" data-sub="Reçu '+e.type+' — '+e.amount+' CAD" ' +
                   'style="background:none;border:none;color:var(--red);cursor:pointer;font-size:10px;padding:1px 4px">🗑️</button>' +
                   '</div>' +
                   '<img src="'+e.photo+'" style="width:100%;border-radius:6px;cursor:pointer" onclick="viewFullPhoto(this.src)"></div>';
@@ -1568,7 +1718,7 @@ function renderAdminReports() {
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'+
             '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Km parcourus</div><div style="font-size:16px;font-weight:800;color:var(--ac)">'+(r.kmTotal||0)+'</div></div>'+
             '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Total colis</div><div style="font-size:16px;font-weight:800;color:var(--blue)">'+totC+'</div></div>'+
-            '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Dépenses</div><div style="font-size:16px;font-weight:800;color:var(--yellow)">'+totE+'CAD</div></div>'+
+            '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Dépenses</div><div style="font-size:16px;font-weight:800;color:var(--yellow)">'+totE+' CAD</div></div>'+
             '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Total stops</div><div style="font-size:16px;font-weight:800;color:var(--green)">'+totS+'</div></div>'+
             '</div>'+
             (r.exceptions?'<div style="margin-top:8px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:9px;padding:8px;font-size:12px;color:var(--yellow)">⚠️ '+r.exceptions+'</div>':'')+
@@ -2157,8 +2307,37 @@ function saveDriverForm() {
 }
 
 function toggleDriver(email) {
-  var drivers=getDrivers(), idx=drivers.findIndex(function(d){return d.email===email;});
-  if(idx!==-1){drivers[idx].active=!drivers[idx].active;saveDrivers(drivers);renderAdminDrivers();toast(drivers[idx].active?'✅ Compte activé':'⛔ Compte désactivé','success');}
+  var drivers = getDrivers();
+  var idx = drivers.findIndex(function(d){ return d.email === email; });
+  if (idx === -1) return;
+  drivers[idx].active = !drivers[idx].active;
+  saveDrivers(drivers);
+  renderAdminDrivers();
+
+  /* Si désactivé → écrire dans Firebase pour forcer déconnexion sur son appareil */
+  if (!drivers[idx].active && fbReady) {
+    db.collection('driverStatus').doc(email.replace(/[@.]/g,'_')).set({
+      email: email, active: false, blockedAt: new Date().toISOString()
+    }).catch(function(){});
+  } else if (drivers[idx].active && fbReady) {
+    db.collection('driverStatus').doc(email.replace(/[@.]/g,'_')).set({
+      email: email, active: true, blockedAt: null
+    }).catch(function(){});
+  }
+  toast(drivers[idx].active ? '✅ Compte activé' : '⛔ Compte désactivé', 'success');
+}
+
+function deleteDriver(email) {
+  var drivers = getDrivers().filter(function(d){ return d.email !== email; });
+  saveDrivers(drivers);
+  /* Marquer comme supprimé dans Firebase */
+  if (fbReady) {
+    db.collection('driverStatus').doc(email.replace(/[@.]/g,'_')).set({
+      email: email, active: false, deleted: true, blockedAt: new Date().toISOString()
+    }).catch(function(){});
+  }
+  renderAdminDrivers();
+  toast('🗑️ Livreur supprimé', 'success');
 }
 
 /* ── INIT ALL EVENT LISTENERS ── */
@@ -2175,7 +2354,7 @@ window.addEventListener('DOMContentLoaded', function() {
         syncDriversFromFirebase();
         startDashAutoRefresh();
       }
-      else if(currentUser){initDriverUI();show('scHome');}
+      else if(currentUser){initDriverUI();show('scHome');startSessionWatch();}
     }
   } catch(e){ clearSession(); }
 
@@ -2220,7 +2399,11 @@ window.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnFinish').addEventListener('click', confirmEnd);
   document.getElementById('btnCancelEnd').addEventListener('click', function(){ closeModal('mConfirmEnd'); });
   document.getElementById('btnConfirmEndFinal').addEventListener('click', finalizeDay);
-  document.getElementById('btnCloseDone').addEventListener('click', function(){ closeModal('mDone'); resetDay(); });
+  document.getElementById('btnCloseDone').addEventListener('click', function(){
+    closeModal('mDone');
+    /* Auto-déconnexion après fin de journée */
+    autoLogoutAfterDay();
+  });
   document.getElementById('kmEndInput').addEventListener('input', function(){
     var km=parseInt(this.value);
     if(km&&day.kmStart&&km>day.kmStart){day.kmEnd=km;document.getElementById('kmTotalDisplay').textContent=(km-day.kmStart)+' km';document.getElementById('kmTotalCard').style.display='block';markCheck('chk-km','chk-km-l',true);}
@@ -2283,8 +2466,8 @@ window.addEventListener('DOMContentLoaded', function() {
     day.expenses.push({id:Date.now(),type:expType,amount:amount,photo:expPhotoData,time:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})});
     saveSession(); renderExpenses(); refreshHome();
     closeModal('mAddExp');
-    toast('✅ '+amount+'CAD ('+expType+')','success');
-    addTL('Dépense : <strong>'+amount+'CAD</strong> ('+expType+')');
+    toast('✅ '+amount+' CAD ('+expType+')','success');
+    addTL('Dépense : <strong>'+amount+' CAD</strong> ('+expType+')');
   });
 
   /* expense list delete (delegated) */
@@ -2370,11 +2553,9 @@ window.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnCancelDel').addEventListener('click', function(){ closeModal('mDelDriver'); pendingDelEmail=null; });
   document.getElementById('btnConfirmDel').addEventListener('click', function(){
     if(pendingDelEmail){
-      var d=getDrivers().find(function(x){return x.email===pendingDelEmail;});
-      saveDrivers(getDrivers().filter(function(x){return x.email!==pendingDelEmail;}));
-      closeModal('mDelDriver'); pendingDelEmail=null;
-      renderAdminDrivers();
-      toast('🗑️ '+(d?d.name:'Livreur')+' supprimé','success');
+      deleteDriver(pendingDelEmail);
+      closeModal('mDelDriver');
+      pendingDelEmail=null;
     }
   });
 
