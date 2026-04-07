@@ -556,6 +556,39 @@ textarea.ibox{resize:none;min-height:72px;font-size:14px;font-weight:400;line-he
   </div>
 </div>
 
+<!-- Modal validation fin de journée -->
+<div class="mbg" id="mValidation">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="font-size:40px;margin-bottom:8px">⚠️</div>
+      <div class="mttl">Informations manquantes</div>
+      <div style="font-size:13px;color:var(--t2)">Veuillez compléter ou corriger les éléments suivants</div>
+    </div>
+    <div id="validationList" style="margin-bottom:14px"></div>
+    <div class="btn2col">
+      <button class="btn btn-ghost" onclick="closeModal('mValidation')">Retour</button>
+      <button class="btn" id="btnValidationForce" style="background:var(--yellow);color:#0f172a;display:none" onclick="day._confirmOverride=true;closeModal('mValidation');confirmEnd();">
+        <i class="fas fa-check"></i> Terminer quand même
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal supprimer photos/rapports (admin) -->
+<div class="mbg" id="mDeleteData">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div style="font-size:36px;text-align:center;margin-bottom:8px">🗑️</div>
+    <div class="mttl" id="mDeleteDataTitle">Supprimer</div>
+    <div style="font-size:13px;color:var(--t2);margin-bottom:16px" id="mDeleteDataSub">Cette action est irréversible.</div>
+    <div class="btn2col">
+      <button class="btn btn-ghost" onclick="closeModal('mDeleteData')">Annuler</button>
+      <button class="btn btn-red" id="btnConfirmDeleteData"><i class="fas fa-trash"></i> Supprimer</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"><span id="toastIco"></span> <span id="toastMsg"></span></div>
 </div>
 
@@ -811,29 +844,78 @@ function doLogin() {
   btn.textContent = 'Connexion…';
   btn.disabled = true;
 
-  setTimeout(function() {
-    var acc = findAccount(email, pass);
-    if (acc) {
-      currentUser = acc;
-      saveSession();
-      if (acc.role === 'admin') {
-        show('scAdmin');
-        renderAdminDash();
-        syncDriversFromFirebase();
-        startDashAutoRefresh();
-        toast('Bienvenue, ' + acc.name + ' 🛡️', 'success');
-      } else {
-        initDriverUI();
-        show('scHome');
-        toast('Bienvenue, ' + acc.name.split(' ')[0] + ' 👋', 'success');
-      }
-    } else {
-      errEl.style.display = 'block';
-      errEl.textContent = 'Email ou mot de passe incorrect';
-      btn.textContent = 'Se connecter';
-      btn.disabled = false;
+  /* Vérifier d'abord en local, puis charger Firebase si pas trouvé */
+  function attemptLogin(drivers) {
+    var e = email.trim().toLowerCase();
+    var p = pass.trim();
+    /* Admin */
+    if (e === ADMIN_EMAIL.toLowerCase() && p === ADMIN_PASS) {
+      var acc = {email:ADMIN_EMAIL, name:'Car Logistique', initials:'CL', role:'admin'};
+      onLoginSuccess(acc);
+      return;
     }
-  }, 300);
+    /* Chercher dans la liste fournie */
+    for (var i = 0; i < drivers.length; i++) {
+      var d = drivers[i];
+      if (d.active && d.email.toLowerCase() === e && d.password === p) {
+        onLoginSuccess(d);
+        return;
+      }
+    }
+    /* Pas trouvé */
+    errEl.style.display = 'block';
+    errEl.textContent = 'Email ou mot de passe incorrect';
+    btn.textContent = 'Se connecter';
+    btn.disabled = false;
+  }
+
+  function onLoginSuccess(acc) {
+    currentUser = acc;
+    saveSession();
+    if (acc.role === 'admin') {
+      show('scAdmin');
+      renderAdminDash();
+      syncDriversFromFirebase();
+      startDashAutoRefresh();
+      toast('Bienvenue, ' + acc.name + ' 🛡️', 'success');
+    } else {
+      initDriverUI();
+      show('scHome');
+      toast('Bienvenue, ' + acc.name.split(' ')[0] + ' 👋', 'success');
+    }
+  }
+
+  /* Essai 1 : localStorage (rapide) */
+  var localDrivers = getDrivers();
+  var e0 = email.trim().toLowerCase(), p0 = pass.trim();
+  var foundLocal = false;
+  if (e0 === ADMIN_EMAIL.toLowerCase() && p0 === ADMIN_PASS) { foundLocal = true; }
+  else {
+    for (var i = 0; i < localDrivers.length; i++) {
+      if (localDrivers[i].active && localDrivers[i].email.toLowerCase() === e0 && localDrivers[i].password === p0) { foundLocal = true; break; }
+    }
+  }
+
+  if (foundLocal) {
+    /* Trouvé en local, pas besoin de Firebase */
+    attemptLogin(localDrivers);
+  } else if (fbReady) {
+    /* Pas en local → charger depuis Firebase (livreur créé par admin depuis un autre appareil) */
+    db.collection('config').doc('drivers').get().then(function(doc) {
+      if (doc.exists && doc.data().list) {
+        var list = doc.data().list;
+        localStorage.setItem('cl_drivers', JSON.stringify(list));
+        attemptLogin(list);
+      } else {
+        attemptLogin(localDrivers);
+      }
+    }).catch(function() {
+      attemptLogin(localDrivers);
+    });
+  } else {
+    /* Pas de Firebase */
+    attemptLogin(localDrivers);
+  }
 }
 
 function doLogout() {
@@ -952,11 +1034,56 @@ function markCheck(boxId, lblId, done) {
 }
 
 function checkFinish() {
-  /* Le km de fin est obligatoire. Les photos sont fortement recommandées mais
-     ne bloquent pas si le livreur n'a pas pu les prendre. */
   var kmOk = !!(day.kmEnd && day.kmEnd > (day.kmStart || 0));
   var btn = document.getElementById('btnFinish');
   if (btn) btn.disabled = !kmOk;
+}
+
+/* Validation avant fin de journée — affiche les champs vides */
+function confirmEnd() {
+  var missing = [];
+
+  if (!day.kmEnd || day.kmEnd <= (day.kmStart||0))
+    missing.push({icon:'🔢', label:'Kilométrage de fin', action:'goToKm'});
+
+  /* Stops/colis — si tous à 0, demander confirmation */
+  var anyDelivery = (day.stopsDelivered||0)+(day.packagesDelivered||0)+(day.stopsPickup||0)+(day.packagesPickup||0);
+  if (anyDelivery === 0)
+    missing.push({icon:'📦', label:'Stops et colis (tous à 0 — à confirmer)', action:'goToDelivery'});
+
+  /* Dépenses > 0 sans photo */
+  var expSansPhoto = (day.expenses||[]).filter(function(e){ return !e.photo; });
+  if (expSansPhoto.length)
+    missing.push({icon:'🧾', label: expSansPhoto.length + ' dépense(s) sans photo de reçu', action:'goToExpenses'});
+
+  if (missing.length > 0 && !day._confirmOverride) {
+    /* Afficher le modal de validation */
+    var listHtml = missing.map(function(m) {
+      return '<div style="display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--b1)">' +
+        '<div style="font-size:22px;flex-shrink:0">' + m.icon + '</div>' +
+        '<div style="flex:1"><div style="font-size:14px;font-weight:600">' + m.label + '</div></div>' +
+        '<div class="missingAction" data-action="' + m.action + '" style="font-size:11px;font-weight:700;color:var(--ac);cursor:pointer;padding:5px 9px;background:rgba(249,115,22,.1);border-radius:8px">Remplir</div>' +
+        '</div>';
+    }).join('');
+
+    var modal = document.getElementById('mValidation');
+    document.getElementById('validationList').innerHTML = listHtml;
+    /* Si seulement le stop/colis est manquant, on peut quand même continuer */
+    var canForce = missing.every(function(m){ return m.action === 'goToDelivery'; });
+    document.getElementById('btnValidationForce').style.display = canForce ? 'flex' : 'none';
+    openModal('mValidation');
+    return;
+  }
+
+  /* Tout OK — afficher le modal de confirmation final */
+  var kmT  = (day.kmEnd||0) - (day.kmStart||0);
+  var totC = (day.packagesDelivered||0) + (day.packagesPickup||0);
+  var totE = (day.expenses||[]).reduce(function(s,e){return s+e.amount;},0);
+  document.getElementById('cKm').textContent    = kmT + ' km';
+  document.getElementById('cColis').textContent = totC;
+  document.getElementById('cExp').textContent   = totE + ' €';
+  day._confirmOverride = false;
+  openModal('mConfirmEnd');
 }
 
 function updateEndUI() {
@@ -1360,40 +1487,70 @@ function renderAdminReports() {
       list.innerHTML='<div style="text-align:center;padding:32px 20px;color:var(--t3)"><div style="font-size:32px;margin-bottom:9px">📋</div><div style="font-size:15px;color:var(--t2);font-weight:600">Aucun rapport</div><div style="font-size:12px;margin-top:4px">Les rapports apparaissent quand les livreurs terminent leur journée</div></div>';
       return;
     }
+
+    /* Bouton supprimer TOUS les rapports */
+    var topBtn = '<div style="display:flex;justify-content:flex-end;margin-bottom:12px">' +
+      '<button class="adminDeleteBtn" data-action="deleteAllReports" data-param="" data-title="Supprimer TOUS les rapports ?" data-sub="Tous les rapports de tous les livreurs seront supprimés définitivement." ' +
+      'style="background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.3);border-radius:9px;padding:8px 13px;color:var(--red);font-family:Outfit,sans-serif;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">' +
+      '<i class="fas fa-trash"></i> Tout supprimer</button></div>';
+
     var byDate={};
     reps.forEach(function(r){if(!byDate[r.date])byDate[r.date]=[];byDate[r.date].push(r);});
-    list.innerHTML=Object.keys(byDate).sort().reverse().map(function(date){
+
+    list.innerHTML = topBtn + Object.keys(byDate).sort().reverse().map(function(date){
       var lbl=new Date(date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
       return '<div style="margin-bottom:14px"><div class="sec">'+lbl+'</div>'+
         byDate[date].map(function(r){
           var totE=(r.expenses||[]).reduce(function(s,e){return s+e.amount;},0);
           var totC=(r.packagesDelivered||0)+(r.packagesPickup||0);
           var totS=(r.stopsDelivered||0)+(r.stopsPickup||0);
+          var dEmail = r.driverEmail||'';
+          var dDate  = r.date||'';
 
-          var photosHtml = '<div style="margin-top:10px"><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">Photos fin de journée</div>'+
+          /* Photos fin de journée */
+          var photosHtml = '<div style="margin-top:10px">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">' +
+            '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Photos fin de journée</div>' +
+            '<button class="adminDeleteBtn" data-action="deleteAllPhotos" data-param="'+dEmail+'|'+dDate+'" data-title="Supprimer toutes les photos ?" data-sub="Photos scanner, km et reçus de ce rapport." ' +
+            'style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:7px;padding:4px 9px;color:var(--red);font-family:Outfit,sans-serif;font-size:10px;font-weight:700;cursor:pointer">🗑️ Toutes les photos</button>' +
+            '</div>' +
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+
           if(r.photoScan){
-            photosHtml+='<div><div style="font-size:10px;color:var(--t3);margin-bottom:4px">📄 Rapport scanner</div>'+
-              '<img src="'+r.photoScan+'" style="width:100%;border-radius:8px;cursor:pointer" onclick="viewFullPhoto(this.src)"></div>';
+            photosHtml+='<div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+              '<span style="font-size:10px;color:var(--t3)">📄 Rapport scanner</span>' +
+              '<button class="adminDeleteBtn" data-action="deletePhoto" data-param="'+dEmail+'|'+dDate+'|scan" data-title="Supprimer cette photo ?" data-sub="Photo du rapport scanner." ' +
+              'style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:2px 5px">🗑️</button>' +
+              '</div><img src="'+r.photoScan+'" style="width:100%;border-radius:8px;cursor:pointer" onclick="viewFullPhoto(this.src)"></div>';
           } else {
             photosHtml+='<div style="background:var(--card2);border-radius:8px;padding:14px;text-align:center;font-size:11px;color:var(--t3)">📄 Pas de photo</div>';
           }
           if(r.photoOdo){
-            photosHtml+='<div><div style="font-size:10px;color:var(--t3);margin-bottom:4px">🚗 Kilométrage</div>'+
-              '<img src="'+r.photoOdo+'" style="width:100%;border-radius:8px;cursor:pointer" onclick="viewFullPhoto(this.src)"></div>';
+            photosHtml+='<div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+              '<span style="font-size:10px;color:var(--t3)">🚗 Kilométrage</span>' +
+              '<button class="adminDeleteBtn" data-action="deletePhoto" data-param="'+dEmail+'|'+dDate+'|odo" data-title="Supprimer cette photo ?" data-sub="Photo du kilométrage." ' +
+              'style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:2px 5px">🗑️</button>' +
+              '</div><img src="'+r.photoOdo+'" style="width:100%;border-radius:8px;cursor:pointer" onclick="viewFullPhoto(this.src)"></div>';
           } else {
             photosHtml+='<div style="background:var(--card2);border-radius:8px;padding:14px;text-align:center;font-size:11px;color:var(--t3)">🚗 Pas de photo</div>';
           }
           photosHtml+='</div></div>';
 
+          /* Reçus dépenses */
           var recusHtml = '';
           if(r.expenses && r.expenses.length) {
             var withPhoto = r.expenses.filter(function(e){return e.photo;});
             if(withPhoto.length) {
               recusHtml = '<div style="margin-top:10px"><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">Reçus dépenses ('+withPhoto.length+')</div>'+
                 '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">';
-              withPhoto.forEach(function(e){
-                recusHtml+='<div><div style="font-size:9px;color:var(--t3);margin-bottom:3px">'+e.type+' '+e.amount+'€</div>'+
+              r.expenses.forEach(function(e, ei){
+                if(!e.photo) return;
+                recusHtml+='<div>' +
+                  '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">' +
+                  '<span style="font-size:9px;color:var(--t3)">'+e.type+' '+e.amount+'€</span>' +
+                  '<button class="adminDeleteBtn" data-action="deletePhoto" data-param="'+dEmail+'|'+dDate+'|exp'+ei+'" data-title="Supprimer ce reçu ?" data-sub="Reçu '+e.type+' — '+e.amount+'€" ' +
+                  'style="background:none;border:none;color:var(--red);cursor:pointer;font-size:10px;padding:1px 4px">🗑️</button>' +
+                  '</div>' +
                   '<img src="'+e.photo+'" style="width:100%;border-radius:6px;cursor:pointer" onclick="viewFullPhoto(this.src)"></div>';
               });
               recusHtml+='</div></div>';
@@ -1403,7 +1560,11 @@ function renderAdminReports() {
           return '<div class="card" style="margin-bottom:9px">'+
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
             '<div style="font-size:15px;font-weight:700">'+(r.driverName||r.driverEmail)+'</div>'+
-            '<span style="font-size:10px;padding:3px 8px;border-radius:20px;background:rgba(34,197,94,.15);color:var(--green);font-weight:700">✅ Terminé</span></div>'+
+            '<div style="display:flex;align-items:center;gap:7px">'+
+            '<span style="font-size:10px;padding:3px 8px;border-radius:20px;background:rgba(34,197,94,.15);color:var(--green);font-weight:700">✅ Terminé</span>'+
+            '<button class="adminDeleteBtn" data-action="deleteReport" data-param="'+dEmail+'|'+dDate+'" data-title="Supprimer ce rapport ?" data-sub="Rapport du '+lbl+' de '+(r.driverName||r.driverEmail)+'" ' +
+            'style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:7px;padding:4px 8px;color:var(--red);font-family:Outfit,sans-serif;font-size:10px;font-weight:700;cursor:pointer">🗑️</button>'+
+            '</div></div>'+
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'+
             '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Km parcourus</div><div style="font-size:16px;font-weight:800;color:var(--ac)">'+(r.kmTotal||0)+'</div></div>'+
             '<div style="background:var(--card2);border-radius:9px;padding:9px"><div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:2px">Total colis</div><div style="font-size:16px;font-weight:800;color:var(--blue)">'+totC+'</div></div>'+
@@ -1415,7 +1576,94 @@ function renderAdminReports() {
             '</div>';
         }).join('')+'</div>';
     }).join('');
+
+    /* Délégation pour les boutons supprimer */
+    list.addEventListener('click', function(e) {
+      var btn = e.target.closest('.adminDeleteBtn');
+      if (!btn) return;
+      var action = btn.getAttribute('data-action');
+      var param  = btn.getAttribute('data-param');
+      var title  = btn.getAttribute('data-title');
+      var sub    = btn.getAttribute('data-sub');
+      document.getElementById('mDeleteDataTitle').textContent = title;
+      document.getElementById('mDeleteDataSub').textContent   = sub;
+      var confirmBtn = document.getElementById('btnConfirmDeleteData');
+      confirmBtn.setAttribute('data-action', action);
+      confirmBtn.setAttribute('data-param',  param);
+      openModal('mDeleteData');
+    }, {once: true});  /* once:true pour éviter les doublons à chaque re-render */
   });
+}
+
+/* ── Supprimer une photo d'un rapport ── */
+function deletePhotoFromReport(driverEmail, date, photoType) {
+  var key = 'cl_reports_' + driverEmail;
+  var reps = []; try { reps = JSON.parse(localStorage.getItem(key)||'[]'); } catch(e) {}
+  var idx = reps.findIndex(function(r){ return r.date === date; });
+  if (idx === -1) { toast('Rapport introuvable','error'); return; }
+
+  if (photoType === 'scan') {
+    reps[idx].photoScan = null;
+  } else if (photoType === 'odo') {
+    reps[idx].photoOdo = null;
+  } else if (photoType.startsWith('exp')) {
+    var ei = parseInt(photoType.replace('exp',''));
+    if (reps[idx].expenses && reps[idx].expenses[ei]) {
+      reps[idx].expenses[ei] = Object.assign({}, reps[idx].expenses[ei], {photo: null});
+    }
+  }
+  localStorage.setItem(key, JSON.stringify(reps));
+
+  /* Firebase */
+  if (fbReady) {
+    var docId = driverEmail.replace(/[@.]/g,'_') + '_' + date;
+    var update = {};
+    if (photoType === 'scan')      update = {photoScan: null};
+    else if (photoType === 'odo')  update = {photoOdo: null};
+    else {
+      /* Pour les dépenses, on doit mettre à jour le tableau entier */
+      var fbReps = reps[idx].expenses.map(function(e){
+        return {id:e.id, type:e.type, amount:e.amount, time:e.time, photo:e.photo||null};
+      });
+      update = {expenses: fbReps};
+    }
+    db.collection('reports').doc(docId).update(update).catch(function(){});
+
+    /* Supprimer du Storage si URL Firebase */
+    var oldPhoto = null;
+    if (photoType === 'scan' && reps[idx].photoScan) oldPhoto = reps[idx].photoScan;
+    if (oldPhoto && oldPhoto.startsWith('https://')) {
+      try { firebase.storage().refFromURL(oldPhoto).delete().catch(function(){}); } catch(e) {}
+    }
+  }
+  toast('🗑️ Photo supprimée','success');
+  renderAdminReports();
+}
+
+function deleteAllPhotosFromReport(driverEmail, date) {
+  var key = 'cl_reports_' + driverEmail;
+  var reps = []; try { reps = JSON.parse(localStorage.getItem(key)||'[]'); } catch(e) {}
+  var idx = reps.findIndex(function(r){ return r.date === date; });
+  if (idx === -1) { toast('Rapport introuvable','error'); return; }
+
+  reps[idx].photoScan = null;
+  reps[idx].photoOdo  = null;
+  reps[idx].expenses  = (reps[idx].expenses||[]).map(function(e){
+    return Object.assign({}, e, {photo: null});
+  });
+  localStorage.setItem(key, JSON.stringify(reps));
+
+  if (fbReady) {
+    var docId = driverEmail.replace(/[@.]/g,'_') + '_' + date;
+    db.collection('reports').doc(docId).update({
+      photoScan: null, photoOdo: null,
+      expenses: reps[idx].expenses.map(function(e){
+        return {id:e.id,type:e.type,amount:e.amount,time:e.time,photo:null};
+      })
+    }).catch(function(){});
+  }
+  toast('🗑️ Toutes les photos supprimées','success');
+  renderAdminReports();
 }
 
 /* Voir photo en plein écran */
@@ -1969,13 +2217,7 @@ window.addEventListener('DOMContentLoaded', function() {
   /* --- END DAY --- */
   document.getElementById('btnEndDay').addEventListener('click', function(){ updateEndUI(); show('scEndDay'); });
   document.getElementById('btnBackFromEnd').addEventListener('click', function(){ show('scHome'); });
-  document.getElementById('btnFinish').addEventListener('click', function(){
-    var kmT=(day.kmEnd||0)-(day.kmStart||0), totC=(day.packagesDelivered||0)+(day.packagesPickup||0), totE=day.expenses.reduce(function(s,e){return s+e.amount;},0);
-    document.getElementById('cKm').textContent=kmT+' km';
-    document.getElementById('cColis').textContent=totC;
-    document.getElementById('cExp').textContent=totE+' €';
-    openModal('mConfirmEnd');
-  });
+  document.getElementById('btnFinish').addEventListener('click', confirmEnd);
   document.getElementById('btnCancelEnd').addEventListener('click', function(){ closeModal('mConfirmEnd'); });
   document.getElementById('btnConfirmEndFinal').addEventListener('click', finalizeDay);
   document.getElementById('btnCloseDone').addEventListener('click', function(){ closeModal('mDone'); resetDay(); });
@@ -2055,10 +2297,6 @@ window.addEventListener('DOMContentLoaded', function() {
       toast('Dépense supprimée','success');
     }
   });
-
-  /* --- EXPORT BUTTONS --- */
-  document.getElementById('btnExportCSV').addEventListener('click', exportCSV);
-  document.getElementById('btnExportXLSX').addEventListener('click', exportXLSX);
 
   /* --- ADMIN NAV --- */
   var ATITLES = {
@@ -2148,6 +2386,55 @@ window.addEventListener('DOMContentLoaded', function() {
   /* --- EXPORT BUTTONS --- */
   document.getElementById('btnExportCSV').addEventListener('click', exportCSV);
   document.getElementById('btnExportXLSX').addEventListener('click', exportXLSX);
+
+  /* --- VALIDATION MODAL ACTIONS --- */
+  document.getElementById('mValidation').addEventListener('click', function(e) {
+    var btn = e.target.closest('.missingAction');
+    if (!btn) return;
+    var action = btn.getAttribute('data-action');
+    closeModal('mValidation');
+    if (action === 'goToKm') {
+      var el = document.getElementById('kmEndInput');
+      if (el) { setTimeout(function(){ el.focus(); el.scrollIntoView({behavior:'smooth',block:'center'}); }, 200); }
+    } else if (action === 'goToDelivery') {
+      show('scDelivery');
+    } else if (action === 'goToExpenses') {
+      show('scExpenses');
+    }
+  });
+
+  document.getElementById('btnValidationForce').addEventListener('click', function() {
+    day._confirmOverride = true;
+    closeModal('mValidation');
+    confirmEnd();
+  });
+
+  /* --- DELETE DATA (admin) --- */
+  document.getElementById('btnConfirmDeleteData').addEventListener('click', function() {
+    var action = this.getAttribute('data-action');
+    var param  = this.getAttribute('data-param');
+    closeModal('mDeleteData');
+
+    if (action === 'deleteReport') {
+      var parts = param.split('|'), dEmail = parts[0], dDate = parts[1];
+      var key = 'cl_reports_'+dEmail;
+      var reps = []; try{ reps=JSON.parse(localStorage.getItem(key)||'[]'); }catch(ex){}
+      localStorage.setItem(key, JSON.stringify(reps.filter(function(r){return r.date!==dDate;})));
+      if (fbReady) db.collection('reports').doc(dEmail.replace(/[@.]/g,'_')+'_'+dDate).delete().catch(function(){});
+      toast('🗑️ Rapport supprimé','success'); renderAdminReports();
+
+    } else if (action === 'deleteAllReports') {
+      getDrivers().forEach(function(d){ localStorage.removeItem('cl_reports_'+d.email); });
+      if (fbReady) { db.collection('reports').get().then(function(snap){ snap.forEach(function(doc){doc.ref.delete();}); }).catch(function(){}); }
+      toast('🗑️ Tous les rapports supprimés','success'); renderAdminReports();
+
+    } else if (action === 'deletePhoto') {
+      var p2=param.split('|'); deletePhotoFromReport(p2[0],p2[1],p2[2]);
+
+    } else if (action === 'deleteAllPhotos') {
+      var p3=param.split('|'); deleteAllPhotosFromReport(p3[0],p3[1]);
+    }
+  });
 
 }); // end DOMContentLoaded
 
